@@ -1,0 +1,40 @@
+close all;
+clear;
+clc;
+
+inertia = 0.5;
+damping = 1;
+control_input_range = [-10,10];
+lower_state_bounds = [-inf; 2];
+upper_state_bounds = [inf; 20];
+sampling_period = 1/3;
+initial_state = [3; 10];
+
+cyber_system = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state);
+% bar = cyber_system.simulate([0,10]);
+
+mass = 0.5;
+damping = 1;
+Q = eye(2);
+R = 1;
+sampling_period = 1/3;
+initial_state = [3; 10];
+
+physical_system = simple_translational(mass,damping,Q,R,sampling_period,initial_state);
+% bar = foo.simulate([0,10]);
+
+cps = basic_coreg(physical_system, cyber_system);
+disp(cps);
+
+results = cps.simulate([0,10]);
+
+ts = results(:,end);
+xp1 = results(:,1);
+xp2 = results(:)
+
+% figure;
+% hold on;
+% plot(bar(:,end), bar(:,1)) %Position
+% plot(bar(:,end), bar(:,2)) %Velocity
+% plot(bar(:,end), bar(:,3)) %Control Input
+% legend(["Position", "Velocity", "Control Input"])

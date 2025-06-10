@@ -1,0 +1,43 @@
+classdef simple_translational < lqr
+
+    properties
+        M; b; sys; gs; period_span;
+    end
+
+    methods
+        function self = simple_translational(mass,damping,Q,R,sampling_period,x0)
+            self = self@lqr(sampling_period)
+
+            self.M = mass;
+            self.b = damping;
+            self.x0 = x0;
+
+            self.A = [0 1; 0 -self.b/self.M];
+            self.B = [0; 1/self.M];
+            self.C = eye(2);
+            self.D = 0;
+
+            self.Q = Q;
+            self.R = R;
+
+            self.sys = ss(self.A,self.B,self.C,self.D);
+            dsys = c2d(sys,sampling_period,"zoh");
+            self.period_span = (20:-1:2).^-1;
+
+            for i = 1:length(period_span)
+                dsys = c2d(self.sys, period_span(i),"zoh");
+                self.gs(i) = dlqr(dys.A,dsys.B,self.Q,self.R);
+            end
+
+            self.Kd = dlqr(dsys.A,dsys.B,self.Q,self.R);
+ 
+        end %simple_translational constructor
+
+        function update_sampling_period(self, new_period)
+            self.sampling_period = new_period;
+
+
+        end
+    end
+ 
+end % classdef
