@@ -5,7 +5,7 @@ classdef simple_translational < lqr
     end
 
     methods
-        function self = simple_translational(mass,damping,Q,R,sampling_period,x0)
+        function self = simple_translational(mass,damping,Q,R,sampling_period,rates,x0)
             self = self@lqr(sampling_period)
 
             self.M = mass;
@@ -22,14 +22,19 @@ classdef simple_translational < lqr
 
             self.sys = ss(self.A,self.B,self.C,self.D);
             
-            %un-hardcode this someday
-            self.period_span = (20:-1:2).^-1;
+            %Build the gain schedule
+            self.period_span = flip(rates.^-1);
             for i = 1:length(self.period_span)
                 dsys = c2d(self.sys, self.period_span(i),"zoh");
                 self.gs{i} = dlqr(dsys.A,dsys.B,self.Q,self.R);
             end
-
-            self.Kd = self.gs{1};
+            
+            gs_idx = find(self.period_span <= sampling_period,1,"last");
+            if isempty(gs_idx)
+                [~, gs_idx] = min(self.period_span);
+            end
+             self.sampling_period = self.period_span(gs_idx);
+            self.Kd = self.gs{gs_idx};
  
         end %simple_translational constructor
 
@@ -40,7 +45,6 @@ classdef simple_translational < lqr
             end
             self.sampling_period = self.period_span(gs_idx);
             self.Kd = self.gs{gs_idx};
-            disp(self.sampling_period)
 
         end % update_sampling_period
 

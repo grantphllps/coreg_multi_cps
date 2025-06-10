@@ -10,7 +10,6 @@ classdef (Abstract) mpc < control_system
 
     methods
         function self = mpc(input_constraints, lower_constraints, upper_constraints,sampling_period)
-
             self = self@control_system(sampling_period)
 
             self.input_constraints = input_constraints;

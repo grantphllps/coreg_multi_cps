@@ -1,7 +1,7 @@
 classdef (Abstract) sub_cps < handle
 
     properties
-        physical_system; cyber_system; A; B;
+        physical_system; cyber_system; A; B; xp_idcs; xc_idcs;
     end %properties
 
     methods
@@ -11,6 +11,17 @@ classdef (Abstract) sub_cps < handle
 
             self.A = blkdiag(physical_system.A, cyber_system.A);
             self.B = blkdiag(physical_system.B, cyber_system.B);
+            
+            %xps = # of states in physical system
+            xps = length(physical_system.A(:,end));
+
+            %xcs = # of states in cyber system
+            xcs = length(cyber_system.A(:,end));
+
+            self.xp_idcs = 1:xps;
+            self.xc_idcs = (1:xcs) + length(self.xp_idcs);
+
+
         end
 
         function xdot = systemfun(self,t,x,u)
@@ -22,13 +33,10 @@ classdef (Abstract) sub_cps < handle
             sim_end = sim_span(2);
             window_start = sim_span(1);
 
-            % 0.1) set the physical system sampling period
-            % self.physical_system.update_sampling_period(cyber_system.x0(2))
-            
-            % 0.2) find the next time the component systems need to update
-
+            % set the physical system sampling period
             self.physical_system.update_sampling_period( 1/ (self.cyber_system.x0(2)));
-
+            
+            % get the first update for the cyber-physical systems
             physical_system_update = window_start + self.physical_system.sampling_period;
             cyber_system_update = window_start + self.cyber_system.sampling_period;
 
@@ -49,17 +57,16 @@ classdef (Abstract) sub_cps < handle
                 %TODO: Make sure window end is far enough away/large enough
                 window_span = window_start:0.001:window_end;
 
-                %2) set the respective control inputs
+                %2) set the respective control inputs based on update
+                %switch
                 if update_switch(1) == 1
-                    u_p = self.physical_system.systeminput(t_sim(end), x_sim(1:2,end));
+                    u_p = self.physical_system.systeminput(t_sim(end), x_sim(self.xp_idcs,end));
                 end
 
                 if update_switch(2) == 1
-                    u_c = self.cyber_system.systeminput(t_sim(end), x_sim(3:4,end));
+                    u_c = self.cyber_system.systeminput(t_sim(end), x_sim(self.xc_idcs,end));
                 end
-
-                update_switch = [0; 0];
-               
+                update_switch = [0; 0]; %reset
                 u = [u_p; u_c];
 
                 %3) simulate the system through the window
@@ -75,10 +82,10 @@ classdef (Abstract) sub_cps < handle
 
                 u_sim = [u_sim; u_window];
 
-                %5) update the window
- 
+
+                %4) 
                 self.physical_system.update_sampling_period( 1 / (x_sim(end,end)));
-                self.cyber_system.update_velocity_reference(x_sim(1,end));
+                self.cyber_system.update_velocity_reference(2*x_sim(1,end));
 
                 for i = 1:length(next_updates)
                     if (next_updates(i) - t_sim(end) < 0.005)
@@ -96,10 +103,6 @@ classdef (Abstract) sub_cps < handle
             end %while
             trajectory = [x_sim', u_sim, t_sim'];
         end %simulate
-    
-        function cyber_reference = coupling(self, physical_state)
-            cyber_reference = 10*floor(physical_state);
-        end
     end %methods
 
 end %classdef sub_sps 

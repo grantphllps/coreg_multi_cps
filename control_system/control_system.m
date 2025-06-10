@@ -2,16 +2,12 @@ classdef (Abstract) control_system < handle
 
     properties
         A; B; C; D; sampling_period; x0;
-    end %abstract properties
+    end
 
     methods
         function self = control_system(sampling_period)
             self.sampling_period = sampling_period;
         end
-
-        % function self = update_sampling_period(self, new_period)
-        %     self.sampling_period = new_period;
-        % end
 
         function trajectory = simulate(self, sim_span)
             

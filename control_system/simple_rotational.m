@@ -11,6 +11,10 @@ classdef simple_rotational < mpc
 
             self.x0 = x0;
 
+            if any(x0 > upper_constraints) || any(x0 < lower_constraints)
+                error("rotational x0 outside of constraints")
+            end
+
             self.I = inertia;
             self.b = damping;
 
@@ -22,6 +26,7 @@ classdef simple_rotational < mpc
             self.R = 0;           %Penalty for input
 
             self.velocity_reference = 10;
+
         end % simple_rotational constructor
 
         function self = update_velocity_reference(self, new_reference)
