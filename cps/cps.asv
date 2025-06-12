@@ -11,18 +11,26 @@ classdef (Abstract) cps < handle
         end % %init_parent_system
 
         function self = add_sub_system(self, new_sub_system)
-            idx_start = length(self.A) + 1;
+            state_idx_start = length(self.A) + 1;
+            cntrl_idx_start = length(self.B) + 1;
 
             self.sub_systems{end+1} = new_sub_system;
             
-            % Assign state idxs
+            % Assign state and control idxs
             [new_physical_states, ~] = size(new_sub_system.physical_system.A);
             [new_cyber_states, ~] = size(new_sub_system.cyber_system.A);
+            [~, new_physical_controls] = size(new_sub_system.physical_system.B);
+            [~, new_cyber_controls] = size(new_sub_system.cyber_system.B);
 
-            self.sub_systems{end}.cps_xpidcs = idx_start:idx_start+new_physical_states-1;
-            new_idx_start = idx_start+new_physical_states;
+            self.sub_systems{end}.cps_xpidcs = state_idx_start:state_idx_start+new_physical_states-1;
+            new_idx_start = state_idx_start+new_physical_states;
             self.sub_systems{end}.cps_xcidcs = new_idx_start:new_idx_start+new_cyber_states-1;
-            
+
+            self.sub_systems{end}.cps_upidcs = cntrl_idx_start:cntrl_idx_start+new_physical_controls-1;
+            new_idx_start = cntrl_idx_start + new_physical_controls;
+            self.sub_systems{end}.cps_ucidcs = new_idx_start:new_idx_start+new_cyber_controls -1;
+
+
             % build the new A,B cps matrices
             newA = [];
             newB = [];
@@ -43,11 +51,13 @@ classdef (Abstract) cps < handle
             xdot = self.A*x + self.B*u;
         end
 
-        function [trajectory, updates] = simulate(self, sim_span)
+        function [trajectory, updates1, updates2] = simulate(self, sim_span)
             
-            %TODO: Check validity of these
             sim_end = sim_span(2);
             window_start = sim_span(1);
+            if (sim_end < window_start) || (sim_end - window_start) < 0.005 || length(sim_span) ~= 2
+                error("Invalid simulation window")
+            end
             
             % set the initial sampling rates
             for i = 1:length(self.sub_systems)
@@ -59,7 +69,7 @@ classdef (Abstract) cps < handle
             % set the initial "next update" vector
             next_update = zeros(2*length(self.sub_systems),1);
             for i = 1:length(self.sub_systems)
-                idx = 2*i - 1; %Assumption: 2 controls per sub_system
+                idx = 2*i - 1; %Assumption: exactly 1 cyber and 1 physical control per subsystem 
 
                 physical_system_update = window_start + self.sub_systems{i}.physical_system.sampling_period;
                 cyber_system_update = window_start + self.sub_systems{i}.cyber_system.sampling_period;
@@ -87,6 +97,8 @@ classdef (Abstract) cps < handle
             u = zeros(number_of_inputs,1); % hold current u
             update_switch = ones(1,number_of_inputs);
             up1_updates = [];
+            up1_time = [];
+            up2_updates = [];
             up1_time = [];
             while (sim_end > window_start)
             
@@ -116,6 +128,9 @@ classdef (Abstract) cps < handle
                     idcs = self.sub_systems{2}.cps_xpidcs;
                     working_x = x_sim(idcs,end);
                     u(3) = self.sub_systems{2}.physical_system.systeminput(t_sim(end), working_x);
+
+                    up2_time(end+1) = t_sim(end);
+                    up2_updates(end+1) = u(3);
                 end
 
                 if update_switch(4) == 1
@@ -185,7 +200,7 @@ classdef (Abstract) cps < handle
                         elseif i == 4
                             % update cs1 target
                             state_idx = self.sub_systems{2}.cps_xpidcs(1);
-                            new_rate_target = 2 * x_sim(state_idx,end); % arbitrary coupling
+                            new_rate_target = 2 * abs(x_sim(state_idx,end)); % arbitrary coupling
                             self.sub_systems{2}.cyber_system.update_velocity_reference(new_rate_target);
                             
                             % update cs control
@@ -197,10 +212,11 @@ classdef (Abstract) cps < handle
                     end %time check
                 end %update loop
 
-                window_start = t_window(end);
+                window_start = t_window(end)
             end %while
         trajectory = [x_sim', u_sim, t_sim'];
-        updates = [up1_time; up1]
+        updates1 = [up1_time; up1_updates];
+        updates2 = [up2_time; up2_updates];
         end %simulate
     end % methods
 end % CPS classdef

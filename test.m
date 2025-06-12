@@ -110,7 +110,11 @@ disp("All dimension tests passed")
 
 %sub_1.simulate([0, 10])
 
-[trajectory, updates] = cps.simulate([0,10]);
+%%
+
+[trajectory, updates, updates2] = cps.simulate([0,10]);
+
+%%
 
 ts = trajectory(:,end);
 xp1_1 = trajectory(:,cps.sub_systems{1}.cps_xpidcs(1));
@@ -124,8 +128,6 @@ xc2_u = trajectory(:,12);
 
 xc1_2 = trajectory(:,cps.sub_systems{1}.cps_xcidcs(2));
 xc2_2 = trajectory(:,cps.sub_systems{2}.cps_xcidcs(2));
-
-
 
 figure;
 
@@ -149,6 +151,7 @@ hold on;
 plot(ts,xp2_1);
 plot(ts,xp2_2);
 plot(ts,xp2_u);
+plot(updates2(1,:),-1*updates2(2,:),'x')
 hold off;
 
 subplot(2,2,4);
@@ -156,3 +159,8 @@ hold on;
 plot(ts,xc2_2);
 plot(ts,xc2_u);
 hold off;
+
+figure; hold on;
+plot(updates(1,:),0,'|','color','black') 
+plot(updates2(1,:),0.10,'|','color','green')
+ylim([-3 3])

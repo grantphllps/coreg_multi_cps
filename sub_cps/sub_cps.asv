@@ -2,7 +2,7 @@ classdef (Abstract) sub_cps < handle
 
     properties
         physical_system; cyber_system; A; B; xp_idcs; xc_idcs; % <- these are generally useful
-        cps_xpidcs; cps_xcidcs; cps_upidcs; cps_ucidcs; cps_ps_samplerate_idx; % <- these are only used if part of a parent CPS
+        cps_xpidcs; cps_xcidcs; cps_upidcs, cps_ucidcs % <- these are only used if part of a parent CPS
     end %properties
 
     methods
@@ -26,7 +26,7 @@ classdef (Abstract) sub_cps < handle
             self.cps_xcidcs = -1;
             self.cps_upidcs = -1;
             self.cps_ucidcs = -1;
-            self.cps_ps_samplerate_idx = -1;
+            self.
 
         end
 
