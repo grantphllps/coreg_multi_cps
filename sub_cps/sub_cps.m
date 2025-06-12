@@ -1,7 +1,8 @@
 classdef (Abstract) sub_cps < handle
 
     properties
-        physical_system; cyber_system; A; B; xp_idcs; xc_idcs;
+        physical_system; cyber_system; A; B; xp_idcs; xc_idcs; 
+        cps_xpidcs; cps_xcidcs; % <- these are only used if part of a parent CPS
     end %properties
 
     methods
@@ -21,6 +22,8 @@ classdef (Abstract) sub_cps < handle
             self.xp_idcs = 1:xps;
             self.xc_idcs = (1:xcs) + length(self.xp_idcs);
 
+            self.cps_xpidcs = -1;
+            self.cps_xcidcs = -1;
 
         end
 
@@ -32,6 +35,8 @@ classdef (Abstract) sub_cps < handle
             
             sim_end = sim_span(2);
             window_start = sim_span(1);
+
+            ref_switch = 1;
 
             % set the physical system sampling period
             self.physical_system.update_sampling_period( 1/ (self.cyber_system.x0(2)));
@@ -54,7 +59,6 @@ classdef (Abstract) sub_cps < handle
                 
                 %1) set the window for this segement of the simulation
                 [window_end, idx] = min(next_updates);
-                %TODO: Make sure window end is far enough away/large enough
                 window_span = window_start:0.001:window_end;
 
                 %2) set the respective control inputs based on update
@@ -98,6 +102,12 @@ classdef (Abstract) sub_cps < handle
                         end
                     end
                 end
+
+                if t_sim(end) > 5 && ref_switch == 1
+                    x_sim(1,end) = 7;
+                    ref_switch = 0;
+                end
+
                 
                 window_start = t_window(end);
             end %while

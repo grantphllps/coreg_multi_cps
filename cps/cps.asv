@@ -185,7 +185,7 @@ classdef (Abstract) cps < handle
                         elseif i == 4
                             % update cs1 target
                             state_idx = self.sub_systems{2}.cps_xpidcs(1);
-                            new_rate_target = 2 * abs(x_sim(state_idx,end)); % arbitrary coupling
+                            new_rate_target = 2 * x_sim(state_idx,end); % arbitrary coupling
                             self.sub_systems{2}.cyber_system.update_velocity_reference(new_rate_target);
                             
                             % update cs control
@@ -200,7 +200,7 @@ classdef (Abstract) cps < handle
                 window_start = t_window(end);
             end %while
         trajectory = [x_sim', u_sim, t_sim'];
-        updates = [up1_time; up1_updates];
+        updates = [up1_time; up1]
         end %simulate
     end % methods
 end % CPS classdef
