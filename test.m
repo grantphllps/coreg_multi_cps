@@ -110,11 +110,11 @@ disp("All dimension tests passed")
 
 %sub_1.simulate([0, 10])
 
-%%
+%% Simulate
 
 [trajectory, updates, updates2] = cps.simulate([0,10]);
 
-%%
+%% Plot
 
 ts = trajectory(:,end);
 xp1_1 = trajectory(:,cps.sub_systems{1}.cps_xpidcs(1));

@@ -28,7 +28,7 @@ classdef (Abstract) cps < handle
 
             self.sub_systems{end}.cps_upidcs = cntrl_idx_start:cntrl_idx_start+new_physical_controls-1;
             new_idx_start = cntrl_idx_start + new_physical_controls;
-            self.sub_systems{end}.cps_ucidcs = new_idx_start:new_idx_start+new_cyber_controls -1;
+            self.sub_systems{end}.cps_ucidcs = new_idx_start:new_idx_start+new_cyber_controls-1;
 
 
             % build the new A,B cps matrices

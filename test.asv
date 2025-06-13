@@ -19,7 +19,7 @@ damping = 1;
 Q = eye(2);
 R = 1;
 sampling_period = 1;
-initial_state = [-3; 10];
+initial_state = [7; 0];
 rates = 1:1:20;
 
 physical_system1 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
@@ -110,7 +110,11 @@ disp("All dimension tests passed")
 
 %sub_1.simulate([0, 10])
 
-trajectory = cps.simulate([0,10]);
+%% Simulate
+
+[trajectory, updates, updates2] = cps.simulate([0,10]);
+
+%% Plot
 
 ts = trajectory(:,end);
 xp1_1 = trajectory(:,cps.sub_systems{1}.cps_xpidcs(1));
@@ -120,12 +124,10 @@ xp2_2 = trajectory(:,cps.sub_systems{2}.cps_xpidcs(2));
 xp1_u = trajectory(:,9);
 xc1_u = trajectory(:,10);
 xp2_u = trajectory(:,11);
-xc2_u = trajecotry(:,12);
+xc2_u = trajectory(:,12);
 
 xc1_2 = trajectory(:,cps.sub_systems{1}.cps_xcidcs(2));
 xc2_2 = trajectory(:,cps.sub_systems{2}.cps_xcidcs(2));
-
-
 
 figure;
 
@@ -133,17 +135,32 @@ subplot(2,2,1);
 hold on;
 plot(ts,xp1_1);
 plot(ts,xp1_2);
-plot(ts,x)
+plot(ts,xp1_u)
+plot(updates(1,:),-1*updates(2,:),'x')
+legend("xp1","xp2","up","update")
 hold off;
 
 subplot(2,2,3)
 hold on;
 plot(ts,xc1_2)
 plot(ts,xc1_u)
+hold off;
 
-subplot(1,2,2);
+subplot(2,2,2);
 hold on;
 plot(ts,xp2_1);
 plot(ts,xp2_2);
-plot(ts,xc2_2);
+plot(ts,xp2_u);
+plot(updates2(1,:),-1*updates2(2,:),'x')
 hold off;
+
+subplot(2,2,4);
+hold on;
+plot(ts,xc2_2);
+plot(ts,xc2_u);
+hold off;
+
+figure; hold on;
+plot(updates(1,:),0,'|','color','black') 
+plot(updates2(1,:),0.10,'|','color','green')
+ylim([-3 3])
