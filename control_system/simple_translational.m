@@ -48,7 +48,6 @@ classdef simple_translational < lqr
 
         end % update_sampling_period
 
-        
     end
  
 end % classdef

@@ -37,7 +37,10 @@ classdef simple_rotational < mpc
             x_error = [0; self.velocity_reference] - x;
             J = x_error'*self.Q*x_error + u'*self.R*u;
         end %cost
-
+        
+        function self = update_sampling_period(self, new_period)
+            self.sampling_period = new_period;
+        end
     end %methods
 
 end %classdef
