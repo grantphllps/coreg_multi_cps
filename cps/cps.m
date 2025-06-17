@@ -99,7 +99,6 @@ classdef (Abstract) cps < handle
                 self.farts{i}.set_next_update(next_control_update)
                 next_update(i) = next_control_update;
             end
-            % End New Version
 
             % set the intial state
             x_sim = [];
@@ -174,9 +173,17 @@ classdef (Abstract) cps < handle
                     end
 
                     if ( (self.sub_systems{i}.cyber_system.next_update - t_sim(end) ) <= 0.005)
-                        state_idx = self.sub_systems{i}.cps_xpidcs(1);
-                        new_rate_target = 2 * x_sim(state_idx,end);
+                        
+                        % CPS coupling
+                        physical_system_state = x_sim(self.sub_systems{i}.cps_xpidcs,end);
+                        new_rate_target = norm(physical_system_state);
+
+                        
+                        % state_idx = self.sub_systems{i}.cps_xpidcs(1);
+                        % new_rate_target = 2 * x_sim(state_idx,end);
+
                         self.sub_systems{i}.cyber_system.update_velocity_reference(new_rate_target);
+                        % CPS coupling end
 
                         switch_idx = self.sub_systems{i}.cyber_system.cps_cntrl_idx;
                         update_switch(switch_idx) = 1;
