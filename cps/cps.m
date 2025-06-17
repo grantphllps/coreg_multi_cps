@@ -93,19 +93,6 @@ classdef (Abstract) cps < handle
             number_of_control_systems = length(self.farts);
             next_update = zeros(number_of_control_systems,1);
             
-            % Start Old Version
-            % for i = 1:length(self.sub_systems)
-            %     idx = 2*i - 1; %Assumption: exactly 1 cyber and 1 physical control per subsystem 
-            % 
-            %     physical_system_update = window_start + self.sub_systems{i}.physical_system.sampling_period;
-            %     cyber_system_update = window_start + self.sub_systems{i}.cyber_system.sampling_period;
-            % 
-            %     next_update(idx) = physical_system_update;
-            %     next_update(idx + 1) = cyber_system_update;
-            % end
-            % End Old Version
-
-            % Start New Version
             for i = 1:length(self.farts)
                 next_control_update = window_start + self.farts{i}.sampling_period;
                 self.farts{i}.update_sampling_period(next_control_update);
@@ -114,23 +101,9 @@ classdef (Abstract) cps < handle
             end
             % End New Version
 
-            % set the intial state, lots of dimensional assumptions here
-           
-            % Old version
-            % [number_of_states, ~] = size(self.A);
-            % x_sim = zeros(number_of_states,1);
-            % 
-            % 
-            % for i = 1:length(self.sub_systems)
-            %     idcs = self.sub_systems{i}.cps_xpidcs;
-            %     x_sim(idcs) = self.sub_systems{i}.physical_system.x0;
-            %     idcs = self.sub_systems{i}.cps_xcidcs;
-            %     x_sim(idcs) = self.sub_systems{i}.cyber_system.x0;
-            % end 
-
+            % set the intial state
             x_sim = [];
 
-            %New Version
             for i = 1:length(self.farts)
                 new_x0 = self.farts{i}.x0;
                 x_sim = [x_sim; new_x0];
@@ -144,11 +117,6 @@ classdef (Abstract) cps < handle
             u = zeros(number_of_inputs,1);
             update_switch = ones(1,number_of_inputs);
 
-            % TODO: get rid of these
-            up1_updates = [];
-            up1_time = [];
-            up2_updates = [];
-            up2_time = [];
             while (sim_end > window_start)
             
                 %1) set the window for this segment of the simulation
@@ -156,39 +124,6 @@ classdef (Abstract) cps < handle
                 window_span = window_start:0.001:window_end;
 
                 %2) set the respective control inputs based on the update
-                %switch, very hard-coded
-                % if update_switch(1) == 1
-                %     idcs = self.sub_systems{1}.cps_xpidcs;
-                %     working_x = x_sim(idcs,end);
-                %     u(1) = self.sub_systems{1}.physical_system.systeminput(t_sim(end), working_x);
-                % 
-                %     up1_time(end+1) = t_sim(end);
-                %     up1_updates(end+1) = u(1);
-                % 
-                % end
-                % 
-                % if update_switch(2) == 1
-                %     idcs = self.sub_systems{1}.cps_xcidcs;
-                %     working_x = x_sim(idcs,end);
-                %     u(2) = self.sub_systems{1}.cyber_system.systeminput(t_sim(end), working_x);
-                % end
-                % 
-                % if update_switch(3) == 1
-                %     idcs = self.sub_systems{2}.cps_xpidcs;
-                %     working_x = x_sim(idcs,end);
-                %     u(3) = self.sub_systems{2}.physical_system.systeminput(t_sim(end), working_x);
-                % 
-                %     up2_time(end+1) = t_sim(end);
-                %     up2_updates(end+1) = u(3);
-                % end
-                % 
-                % if update_switch(4) == 1
-                %     idcs = self.sub_systems{2}.cps_xcidcs;
-                %     working_x = x_sim(idcs,end);
-                %     u(4) = self.sub_systems{2}.cyber_system.systeminput(t_sim(end), working_x);
-                % end
-
-                % Set the respective control inputs based on the update switch
                 for i = 1:length(self.farts) 
                     if update_switch(i) == 1
                         %calculate the new control input
@@ -203,7 +138,8 @@ classdef (Abstract) cps < handle
                     end
                 end
                 
-                update_switch = 0*update_switch; %reset update switch
+                %reset update switch
+                update_switch = 0*update_switch; 
 
                  %3) simulate the system through the window
                 [t_window, x_window] = ode45( @(t_sim, x_sim) self.systemfun(t_sim,x_sim,u), window_span, x_sim(:,end));
@@ -220,63 +156,8 @@ classdef (Abstract) cps < handle
 
                 u_sim = [u_sim; u_window];
 
-                %4) update stuff
-                % for i = 1:length(next_update)
-                %     if (next_update(i) - t_sim(end) < 0.005)
-                %         if i == 1
-                %             % update ps1 update rate
-                %             rate_idx = self.sub_systems{1}.cps_xcidcs(2);
-                %             new_rate = x_sim(rate_idx,end);
-                %             new_period = 1 / new_rate;
-                %             self.sub_systems{1}.physical_system.update_sampling_period(new_period);
-                % 
-                %             % update ps control
-                %             update_switch(i) = 1;
-                % 
-                %             % update next_update
-                %             next_update(i) = next_update(i) + self.sub_systems{1}.physical_system.sampling_period;
-                % 
-                %         elseif i == 2
-                %             % update cs1 target
-                %             state_idx = self.sub_systems{1}.cps_xpidcs(1);
-                %             new_rate_target = 2 * x_sim(state_idx,end); % arbitrary coupling
-                %             self.sub_systems{1}.cyber_system.update_velocity_reference(new_rate_target);
-                % 
-                %             % update cs control
-                %             update_switch(i) = 1;
-                % 
-                %             % update next_update
-                %             next_update(i) = next_update(i) + self.sub_systems{1}.cyber_system.sampling_period;
-                % 
-                %         elseif i == 3
-                %             % update ps2 update rate
-                %             rate_idx = self.sub_systems{2}.cps_xcidcs(2);
-                %             new_rate = x_sim(rate_idx,end);
-                %             new_period = 1 / new_rate;
-                %             self.sub_systems{2}.physical_system.update_sampling_period(new_period);
-                % 
-                %             % update ps control
-                %             update_switch(i) = 1;
-                % 
-                %             % update next_update
-                %             next_update(i) = next_update(i) + self.sub_systems{2}.physical_system.sampling_period;
-                % 
-                %         elseif i == 4
-                %             % update cs1 target
-                %             state_idx = self.sub_systems{2}.cps_xpidcs(1);
-                %             new_rate_target = 2 * abs(x_sim(state_idx,end)); % arbitrary coupling
-                %             self.sub_systems{2}.cyber_system.update_velocity_reference(new_rate_target);
-                % 
-                %             % update cs control
-                %             update_switch(i) = 1;
-                % 
-                %             % update next_update
-                %             next_update(i) = next_update(i) + self.sub_systems{2}.cyber_system.sampling_period;
-                %         end
-                %     end %time check
-                % end %update loop
-
-                %New update loop
+                % Update sampling rates, schedule next updates, set update
+                % switch as needed
                 for i = 1:length(self.sub_systems)
 
                     if ( (self.sub_systems{i}.physical_system.next_update - t_sim(end) ) <= 0.005)
@@ -294,7 +175,7 @@ classdef (Abstract) cps < handle
 
                     if ( (self.sub_systems{i}.cyber_system.next_update - t_sim(end) ) <= 0.005)
                         state_idx = self.sub_systems{i}.cps_xpidcs(1);
-                        new_rate_target = 2* x_sim(state_idx,end);
+                        new_rate_target = 2 * x_sim(state_idx,end);
                         self.sub_systems{i}.cyber_system.update_velocity_reference(new_rate_target);
 
                         switch_idx = self.sub_systems{i}.cyber_system.cps_cntrl_idx;

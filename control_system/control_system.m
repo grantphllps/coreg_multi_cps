@@ -23,7 +23,6 @@ classdef (Abstract) control_system < handle
             self.next_update = update;
         end
        
-
         function trajectory = simulate(self, sim_span)
             
             sim_end = sim_span(2);
