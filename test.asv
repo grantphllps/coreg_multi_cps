@@ -46,39 +46,37 @@ rates = 1:1:20;
 
 physical_system2 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
 
+%CPS3 components
 
+inertia = 10;
+damping = 1;
+control_input_range = [-20,20];
+lower_state_bounds = [-inf; 1];
+upper_state_bounds = [inf; 20];
+sampling_period = 1/4;
+initial_state = [0; 15];
+
+cyber_system3 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state);
+
+mass = 0.5;
+damping = 1;
+Q = eye(2);
+R = 1;
+sampling_period = 1;
+initial_state = [3; -5];
+rates = 1:1:20;
+
+physical_system3 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
+
+
+sub_3 = basic_coreg(physical_system3, cyber_system3);
 sub_2 = basic_coreg(physical_system2, cyber_system2);
 sub_1 = basic_coreg(physical_system1, cyber_system1);
 
 cps = multi_cps();
 cps.add_sub_system(sub_1);
 cps.add_sub_system(sub_2);
-
-% ts = results(:,end);
-% xp1 = results(:,1);
-% xp2 = results(:,2);
-% xc1 = results(:,3);
-% xc2 = results(:,4);
-% up = results(:,5);
-% uc = results(:,6);
-
-% figure; hold on;
-
-% plot(ts,xp1);
-% plot(ts,xp2);
-% plot(ts,xc1);
-% plot(ts,xc2);
-% plot(ts,up);
-% plot(ts,uc);
-
-% legend(["xp1","xp2","xc2","up","uc"])
-
-% figure;
-% hold on;
-% plot(bar(:,end), bar(:,1)) %Position
-% plot(bar(:,end), bar(:,2)) %Velocity
-% plot(bar(:,end), bar(:,3)) %Control Input
-% legend(["Position", "Velocity", "Control Input"])
+cps.add_sub_system(sub_3);
 
 %Unit tests
 physical_system1 = cps.sub_systems{1}.physical_system.A;
@@ -114,58 +112,97 @@ disp("All dimension tests passed")
 
 [trajectory] = cps.simulate([0,10]);
 
-%% Plot
+%% Plottings
 
 ts = trajectory(:,end);
 xp1_1 = trajectory(:,cps.sub_systems{1}.cps_xpidcs(1));
 xp1_2 = trajectory(:,cps.sub_systems{1}.cps_xpidcs(2));
 xp2_1 = trajectory(:,cps.sub_systems{2}.cps_xpidcs(1));
 xp2_2 = trajectory(:,cps.sub_systems{2}.cps_xpidcs(2));
-xp1_u = trajectory(:,9);
-xc1_u = trajectory(:,10);
-xp2_u = trajectory(:,11);
-xc2_u = trajectory(:,12);
+xp3_1 = trajectory(:,cps.sub_systems{3}.cps_xpidcs(1));
+xp3_2 = trajectory(:,cps.sub_systems{3}.cps_xpidcs(2));
+
+
+xp1_u = trajectory(:,13);
+xc1_u = trajectory(:,14);
+xp2_u = trajectory(:,15);
+xc2_u = trajectory(:,16);
+xp3_u = trajectory(:,17);
+xc3_u = trajectory(:,18);
 
 xc1_2 = trajectory(:,cps.sub_systems{1}.cps_xcidcs(2));
 xc2_2 = trajectory(:,cps.sub_systems{2}.cps_xcidcs(2));
+xc3_2 = trajectory(:,cps.sub_systems{3}.cps_xcidcs(2));
 
 up1_ts = cps.sub_systems{1}.physical_system.input_updates(1,:);
-up1_us = cps.sub_systems{1}.physical_system.input_updates(2,:);
+up1_us = -cps.sub_systems{1}.physical_system.input_updates(2,:);
 
 up2_ts = cps.sub_systems{2}.physical_system.input_updates(1,:);
-up2_us = cps.sub_systems{2}.physical_system.input_updates(2,:);
+up2_us = -cps.sub_systems{2}.physical_system.input_updates(2,:);
 
-
+up3_ts = cps.sub_systems{3}.physical_system.input_updates(1,:);
+up3_us =- cps.sub_systems{3}.physical_system.input_updates(2,:);
 
 figure;
 
-subplot(2,2,1);
+subplot(2,3,1);
 hold on;
 plot(ts,xp1_1);
 plot(ts,xp1_2);
 plot(ts,xp1_u)
-plot(up2_ts,)
-legend("xp1","xp2","up")
+plot(up1_ts,up1_us,'x')
+title("Physical System 1")
+legend("Translational Position","Translational Velocity","Control Input")
 hold off;
 
-subplot(2,2,3)
-hold on;
-plot(ts,xc1_2)
-plot(ts,xc1_u)
-hold off;
-
-subplot(2,2,2);
+subplot(2,3,2);
 hold on;
 plot(ts,xp2_1);
 plot(ts,xp2_2);
-plot(ts,xp2_u);
+plot(ts,xp2_u)
+plot(up2_ts,up2_us,'x')
+title("Physical System 2")
+legend("Translational Position","Translational Velocity","Control Input")
 hold off;
 
-subplot(2,2,4);
+subplot(2,3,3);
 hold on;
-plot(ts,xc2_2);
-plot(ts,xc2_u);
+plot(ts,xp3_1);
+plot(ts,xp3_2);
+plot(ts,xp3_u)
+plot(up3_ts,up3_us,'x')
+title("Physical System 2")
+legend("Translational Position","Translational Velocity","Control Input")
 hold off;
+
+subplot(2,3,4)
+hold on;
+plot(ts,xc1_2)
+plot(ts,xc1_u)
+title("Cyber System 1")
+legend("Rotational Velocity (rads/sec)", "Cyber Control Input")
+hold off
+
+subplot(2,3,5)
+hold on;
+plot(ts,xc2_2)
+plot(ts,xc2_u)
+title("Cyber System 2")
+legend("Rotational Velocity (rads/sec)", "Cyber Control Input")
+hold off
+
+subplot(2,3,6)
+hold on;
+plot(ts,xc3_2)
+plot(ts,xc3_u)
+title("Cyber System 3")
+legend("Rotational Velocity (rads/sec)", "Cyber Control Input")
+hold off
+
 
 figure; hold on;
+plot(up1_ts,0,'|',"color",'green')
+plot(up2_ts,.2,'|',"Color","black")
+plot(up3_ts,.4,'|',"Color","blue")
+
 ylim([-3 3])
