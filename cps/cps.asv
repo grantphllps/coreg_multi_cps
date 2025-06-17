@@ -27,17 +27,17 @@ classdef (Abstract) cps < handle
             % state indicies
             
             % physical states
-            physical_state_idcs = state_idx_start:state_idx_start+new_physical_states-1; % indicies of this physical system's state in cps state vector
+            physical_state_idcs = state_idx_start:state_idx_start+new_physical_states-1; % location of this physical system's state in cps state vector
             self.sub_systems{end}.cps_xpidcs = physical_state_idcs;
 
             self.control_systems{end+1} = new_sub_system.physical_system; % Add this control system to 'self.control_systems'
-            self.control_systems{end}.cps_state_idcs = physical_state_idcs; % indicies of this control system's state in cps state vector (as property of the control system) (redundant?)
-            self.sub_systems{end}.physical_system.cps_cntrl_idx = length(self.control_systems); % indicies of this control system in 'self.control_systems'
+            self.control_systems{end}.cps_state_idcs = physical_state_idcs; % location of this control system's state in cps state vector (as property of the control system) (redundant)
+            self.sub_systems{end}.physical_system.cps_cntrl_idx = length(self.control_systems); % location of this control system in 'self.control_systems'
     
             % cyber states
             new_idx_start = state_idx_start+new_physical_states;
-            cyber_state_idcs = new_idx_start:new_idx_start+new_cyber_states-1; % indicies of this cyber system's state in cps state vector
-            self.sub_systems{end}.cps_xcidcs = cyber_state_idcs; 
+            cyber_state_idcs = new_idx_start:new_idx_start+new_cyber_states-1; % location of this cyber'systems state in cps state vector
+            self.sub_systems{end}.cps_xcidcs = cyber_state_idcs;
             
             %Assign the physical system update variable
             self.control_systems{end}.cps_update_idx = cyber_state_idcs(end); % the index of the cyber state variable that sets the physical system's update rate
@@ -46,14 +46,14 @@ classdef (Abstract) cps < handle
             self.control_systems{end+1} = new_sub_system.cyber_system;
             self.control_systems{end}.cps_state_idcs = cyber_state_idcs;
 
-            self.control_systems{end}.cps_update_idx = cyber_state_idcs(end); %indicies of the state variable used as the update rate for this control system (should not affect a cyber system)
-            self.sub_systems{end}.cyber_system.cps_cntrl_idx = length(self.control_systems); % indicies of this control system in 'self.control_systems'
+            self.control_systems{end}.cps_update_idx = cyber_state_idcs(end);
+            self.sub_systems{end}.cyber_system.cps_cntrl_idx = length(self.control_systems); % location of this control system in 'self.control_systems'
     
             
             % control indicies
-            self.sub_systems{end}.cps_upidcs = cntrl_idx_start:cntrl_idx_start+new_physical_controls-1; %indicies of sub system's physical control inputs
+            self.sub_systems{end}.cps_upidcs = cntrl_idx_start:cntrl_idx_start+new_physical_controls-1;
             new_idx_start = cntrl_idx_start + new_physical_controls;
-            self.sub_systems{end}.cps_ucidcs = new_idx_start:new_idx_start+new_cyber_controls-1; %indicies of sub system's cyber control inputs
+            self.sub_systems{end}.cps_ucidcs = new_idx_start:new_idx_start+new_cyber_controls-1;
 
 
             % build the new A,B matrices for the entire cps
