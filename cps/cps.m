@@ -4,6 +4,7 @@ classdef (Abstract) cps < handle
         sub_systems = {}; % Cell array of sub_cps that make up this system
         A; B;
         control_systems = {}; % holds handles to each control_system
+        disturbances = {};
     end
 
     methods
@@ -71,6 +72,15 @@ classdef (Abstract) cps < handle
             self.B = newB;
         end
 
+        function self = add_disturbance(self, new_disturbance, binding)
+            self.disturbances{end+1} = new_disturbance;
+            
+            % NOT working
+            new_disturbance.row = binding;
+            new_disturbance.col = length(self.disturbances);
+            
+        end
+
         function xdot = systemfun(self,t,x,u)
             xdot = self.A*x + self.B*u;
         end
@@ -80,14 +90,14 @@ classdef (Abstract) cps < handle
             % smaller windows that end when the next control system within
             % the CPS needs to update its control input (cyber or physical)
             
-            % 1) set the simulation window, check that it's valid 
+            %1) set the simulation window, check that it's valid 
             sim_end = sim_span(2);
             window_start = sim_span(1);
             if (sim_end < window_start) || (sim_end - window_start) < 0.005 || length(sim_span) ~= 2
                 error("Invalid simulation window")
             end
             
-            % 2) set the initial 'sampling_period' for the physical systems
+            %2) set the initial 'sampling_period' for the physical systems
             % based on the designated cyber state variable
             for i = 1:length(self.sub_systems)
                 rate = self.sub_systems{i}.cyber_system.x0(2); % Assumption: the second state var of the cyber system represents the update rate Hz
@@ -95,15 +105,13 @@ classdef (Abstract) cps < handle
                 self.sub_systems{i}.physical_system.update_sampling_period(starting_period);
             end
             
-            %3) initialize the 'next_update' vector that holds the update
-            %schedule for each control system
+            %3) initialize the 'update_schedule' vector that holds the update
+            %times for each control system
             number_of_control_systems = length(self.control_systems);
-            next_update = zeros(number_of_control_systems,1);
+            control_update_schedule = zeros(number_of_control_systems,1);
             for i = 1:length(self.control_systems)
-                next_control_update = window_start + self.control_systems{i}.sampling_period;
-                self.control_systems{i}.update_sampling_period(next_control_update);
-                self.control_systems{i}.set_next_update(next_control_update)
-                next_update(i) = next_control_update;
+                self.control_systems{i}.refresh_update_schedule(window_start);
+                control_update_schedule(i) = self.control_systems{i}.update_schedule;
             end
 
             %4) Initialize CPS initial conditions
@@ -116,35 +124,67 @@ classdef (Abstract) cps < handle
 
             %5) set other simulation variables
             t_sim = sim_span(1); % initial simulation time
-            [~, number_of_inputs] = size(self.B);
-            u_sim = zeros(1,number_of_inputs); %control input history
-            u = zeros(number_of_inputs,1); %control input vector (not the history)
-            update_switch = ones(1,number_of_inputs); %logical vector that indicates if a control system should be updated
+            [~, number_of_controls] = size(self.B);
+            u_sim = zeros(1,number_of_controls); %control input history
+            u_controls = zeros(number_of_controls,1); %control input vector (not the history)
+            control_update_switch = ones(1,number_of_controls); %logical vector that indicates if a control system should be updated
+            
+            %6) Disturbance stuff
+            disturbance_rows = number_of_controls;
+            disturbance_cols = length(self.disturbances);
+            
+            if disturbance_cols == 0
+                disturbance_cols = 1;
+            end
 
-            %6) simulate CPS through the windows
+            %Assumptions happinging here
+            disturbance_mapping = zeros(disturbance_rows);
+            disturbance_update_schedule = [];
+            disturbance_vals = zeros(disturbance_rows, 1);
+
+            for i = 1:length(self.disturbances)
+                self.disturbances{i}.refresh_update_schedule(window_start)
+                disturbance_update_schedule(i) = self.disturbances{i}.update_schedule;
+                disturbance_row = self.disturbances{i}.row;
+                disturbance_col = self.disturbances{i}.col;
+                disturbance_mapping(disturbance_row,disturbance_col) = 1;
+            end
+            disturbance_update_switch = ones(1,disturbance_cols);
+
+            %6) simulate CPS evolution through the windows
             while (sim_end > window_start)
             
                 %6.1) set the window for this segment of the simulation
-                [window_end, ~] = min(next_update);
+                update_schedule = [control_update_schedule; disturbance_update_schedule];
+                [window_end, ~] = min(update_schedule);
                 window_span = window_start:0.001:window_end;
 
                 %6.2) set the control inputs based on the update switch
                 for i = 1:length(self.control_systems) 
-                    if update_switch(i) == 1
+                    if control_update_switch(i) == 1
                         %calculate the new control input
                         idcs = self.control_systems{i}.cps_state_idcs; %indicies of this control system's state(s)
                         working_x = x_sim(idcs,end);
-                        u(i) = self.control_systems{i}.systeminput(t_sim(end), working_x);
+                        u_controls(i) = self.control_systems{i}.systeminput(t_sim(end), working_x);
                         %track the new update and time it occured
-                        self.control_systems{i}.input_updates(:,end+1) = zeros(length(u(i))+1,1);
+                        self.control_systems{i}.input_updates(:,end+1) = zeros(length(u_controls(i))+1,1);
                         self.control_systems{i}.input_updates(1,end) = t_sim(end);
-                        self.control_systems{i}.input_updates(2:end,end) = u(i);
+                        self.control_systems{i}.input_updates(2:end,end) = u_controls(i);
 
                     end
                 end
+
+                for i = 1:length(self.disturbances)
+                    if disturbance_update_switch(i) == 1
+                        disturbance_vals(i) = self.disturbances{i}.compute_disturbance(t_sim(end));
+                    end
+                end
+
+                u = u_controls+disturbance_mapping * disturbance_vals;
                 
                 %6.3) reset update switch
-                update_switch = 0*update_switch; 
+                control_update_switch = 0*control_update_switch; 
+                disturbance_update_swtich = 0*disturbance_update_switch;
 
                 %6.4) simulate the system through the window
                 [t_window, x_window] = ode45( @(t_sim, x_sim) self.systemfun(t_sim,x_sim,u), window_span, x_sim(:,end));
@@ -153,55 +193,59 @@ classdef (Abstract) cps < handle
                 x_sim = [x_sim x_window'];
                 t_sim = [t_sim t_window'];
                 
-                %6.6) the control inputs are zoh's, buid their 'history'
-                u_window = -1*ones(length(t_window), number_of_inputs);
-                for i = 1:number_of_inputs
-                    u_window(:,i) = u(i)*u_window(:,i);
+                %6.6) the control inputs are zoh's, build their 'history'
+                u_window = 1*ones(length(t_window), number_of_controls);
+                for i = 1:number_of_controls
+                    u_window(:,i) = u_controls(i)*u_window(:,i);
                 end
                 u_sim = [u_sim; u_window];
 
                 %6.7) Update sampling rates, schedule next updates, set update
-                % switch as needed (up to 0.005 s out)
+                % switch as needed (with a 0.005 sec buffer)
                 for i = 1:length(self.sub_systems)
 
-                    if ( (self.sub_systems{i}.physical_system.next_update - t_sim(end) ) <= 0.005)
+                    if ( (self.sub_systems{i}.physical_system.update_schedule - t_sim(end) ) <= 0.005)
                         rate_idx = self.sub_systems{i}.physical_system.cps_update_idx;
                         new_rate = x_sim(rate_idx, end);
                         new_period = 1 / new_rate;
                         self.sub_systems{i}.physical_system.update_sampling_period(new_period);
 
                         switch_idx = self.sub_systems{i}.physical_system.cps_cntrl_idx;
-                        update_switch(switch_idx) = 1;
+                        control_update_switch(switch_idx) = 1;
                         
-                        next_update = self.sub_systems{i}.physical_system.next_update + self.sub_systems{i}.physical_system.sampling_period;
-                        self.sub_systems{i}.physical_system.set_next_update(next_update)
+                        self.sub_systems{i}.physical_system.refresh_update_schedule(t_sim(end))
                     end
 
-                    if ( (self.sub_systems{i}.cyber_system.next_update - t_sim(end) ) <= 0.005)
+                    if ( (self.sub_systems{i}.cyber_system.update_schedule - t_sim(end) ) <= 0.005)
                         
                         % CPS coupling
                         physical_system_state = x_sim(self.sub_systems{i}.cps_xpidcs,end);
                         new_rate_target = norm(physical_system_state);
-
-                        % old coupling
-                        % state_idx = self.sub_systems{i}.cps_xpidcs(1);
-                        % new_rate_target = 2 * x_sim(state_idx,end);
-
                         self.sub_systems{i}.cyber_system.update_velocity_reference(new_rate_target);
                         % CPS coupling end
 
                         switch_idx = self.sub_systems{i}.cyber_system.cps_cntrl_idx;
-                        update_switch(switch_idx) = 1;
+                        control_update_switch(switch_idx) = 1;
 
-                        next_update = self.sub_systems{i}.cyber_system.next_update + self.sub_systems{i}.cyber_system.sampling_period;
-                        self.sub_systems{i}.cyber_system.set_next_update(next_update)
+                        self.sub_systems{i}.cyber_system.refresh_update_schedule(t_sim(end))
                     end
 
                 end
+
+                for i = 1:length(self.disturbances)
+                    if ((self.disturbances{i}.update_schedule - t_sim(end) ) <= 0.005)
+                        self.disturbances{i}.refresh_update_schedule(t_sim(end))
+                        disturbance_update_switch(i) = 1;
+                    end
+                end
                 
-                %6.8) refresh 'next_update' vector
+                %6.8) refresh 'update_schedule' vector
                 for i = 1:length(self.control_systems)
-                    next_update(i) = self.control_systems{i}.next_update;
+                    control_update_schedule(i) = self.control_systems{i}.update_schedule;
+                end
+
+                for i = 1:length(self.disturbances)
+                    disturbance_update_schedule(i) = self.disturbances{i}.update_schedule;
                 end
                 
                 %6.9) set the nexxt window start

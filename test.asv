@@ -4,13 +4,13 @@ clc;
 
 %CPS1 components
 
-inertia = 1;
+inertia = 10;
 damping = 1;
 control_input_range = [-20,20];
 lower_state_bounds = [-inf; 1];
 upper_state_bounds = [inf; 20];
 sampling_period = 1/4;
-initial_state = [0; 10];
+initial_state = [0; 2];
 
 cyber_system1 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state);
 
@@ -19,29 +19,29 @@ damping = 1;
 Q = eye(2);
 R = 1;
 sampling_period = 1;
-initial_state = [7; 0];
+initial_state = [7; 7];
 rates = 1:1:20;
 
 physical_system1 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
 
 %CPS2 components
 
-inertia = .3;
+inertia = 10;
 damping = 1;
 control_input_range = [-20,20];
 lower_state_bounds = [-inf; 1];
 upper_state_bounds = [inf; 20];
 sampling_period = 1/4;
-initial_state = [0; 5];
+initial_state = [0; 2];
 
 cyber_system2 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state);
 
-mass = 0.5;
+mass = 1;
 damping = 1;
 Q = eye(2);
 R = 1;
 sampling_period = 1;
-initial_state = [3; -5];
+initial_state = [4; -10];
 rates = 1:1:20;
 
 physical_system2 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
@@ -54,7 +54,7 @@ control_input_range = [-20,20];
 lower_state_bounds = [-inf; 1];
 upper_state_bounds = [inf; 20];
 sampling_period = 1/4;
-initial_state = [0; 15];
+initial_state = [0; 2];
 
 cyber_system3 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state);
 
@@ -63,7 +63,7 @@ damping = 1;
 Q = eye(2);
 R = 1;
 sampling_period = 1;
-initial_state = [3; -5];
+initial_state = [-12; -2];
 rates = 1:1:20;
 
 physical_system3 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
@@ -78,7 +78,7 @@ cps.add_sub_system(sub_1);
 cps.add_sub_system(sub_2);
 cps.add_sub_system(sub_3);
 
-%Unit tests
+%% Unit tests
 physical_system1 = cps.sub_systems{1}.physical_system.A;
 if any(any(physical_system1 ~= cps.A(1:2,1:2)))
     error("Faild CPS dimension check")
@@ -135,13 +135,13 @@ xc2_2 = trajectory(:,cps.sub_systems{2}.cps_xcidcs(2));
 xc3_2 = trajectory(:,cps.sub_systems{3}.cps_xcidcs(2));
 
 up1_ts = cps.sub_systems{1}.physical_system.input_updates(1,:);
-up1_us = -cps.sub_systems{1}.physical_system.input_updates(2,:);
+up1_us = cps.sub_systems{1}.physical_system.input_updates(2,:);
 
 up2_ts = cps.sub_systems{2}.physical_system.input_updates(1,:);
-up2_us = -cps.sub_systems{2}.physical_system.input_updates(2,:);
+up2_us = cps.sub_systems{2}.physical_system.input_updates(2,:);
 
 up3_ts = cps.sub_systems{3}.physical_system.input_updates(1,:);
-up3_us =- cps.sub_systems{3}.physical_system.input_updates(2,:);
+up3_us = cps.sub_systems{3}.physical_system.input_updates(2,:);
 
 figure;
 
@@ -204,5 +204,13 @@ figure; hold on;
 plot(up1_ts,0,'|',"color",'green')
 plot(up2_ts,.2,'|',"Color","black")
 plot(up3_ts,.4,'|',"Color","blue")
+title("Physical System Updates")
+legend("Physical System 1","Physical System 2", "Physical System 3")
 
 ylim([-3 3])
+
+%% Scratch
+trajectory1 = physical_system1.simulate([0,10]);
+x1s = trajectory(:,1);
+x2s = trajectory(:,2);
+us = trajectory(:3);

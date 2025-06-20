@@ -18,9 +18,9 @@ mass = 1;
 damping = 1;
 Q = eye(2);
 R = 1;
-sampling_period = 1;
+sampling_period = 2;
 initial_state = [7; 7];
-rates = 1:1:20;
+rates = 0.5:1:20;
 
 physical_system1 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
 
@@ -69,6 +69,9 @@ rates = 1:1:20;
 physical_system3 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
 
 
+% Disturbances
+dist1 = constant(1/4);
+
 sub_3 = basic_coreg(physical_system3, cyber_system3);
 sub_2 = basic_coreg(physical_system2, cyber_system2);
 sub_1 = basic_coreg(physical_system1, cyber_system1);
@@ -77,8 +80,9 @@ cps = multi_cps();
 cps.add_sub_system(sub_1);
 cps.add_sub_system(sub_2);
 cps.add_sub_system(sub_3);
+cps.add_disturbance(dist1,1)
 
-%Unit tests
+%% Unit tests
 physical_system1 = cps.sub_systems{1}.physical_system.A;
 if any(any(physical_system1 ~= cps.A(1:2,1:2)))
     error("Faild CPS dimension check")
@@ -135,13 +139,13 @@ xc2_2 = trajectory(:,cps.sub_systems{2}.cps_xcidcs(2));
 xc3_2 = trajectory(:,cps.sub_systems{3}.cps_xcidcs(2));
 
 up1_ts = cps.sub_systems{1}.physical_system.input_updates(1,:);
-up1_us = -cps.sub_systems{1}.physical_system.input_updates(2,:);
+up1_us = cps.sub_systems{1}.physical_system.input_updates(2,:);
 
 up2_ts = cps.sub_systems{2}.physical_system.input_updates(1,:);
-up2_us = -cps.sub_systems{2}.physical_system.input_updates(2,:);
+up2_us = cps.sub_systems{2}.physical_system.input_updates(2,:);
 
 up3_ts = cps.sub_systems{3}.physical_system.input_updates(1,:);
-up3_us =- cps.sub_systems{3}.physical_system.input_updates(2,:);
+up3_us = cps.sub_systems{3}.physical_system.input_updates(2,:);
 
 figure;
 
@@ -178,7 +182,7 @@ hold off;
 subplot(2,3,4)
 hold on;
 plot(ts,xc1_2)
-plot(ts,-xc1_u)
+plot(ts,xc1_u)
 title("Cyber System 1")
 legend("Rotational Velocity (rads/sec)", "Cyber Control Input")
 hold off
@@ -186,7 +190,7 @@ hold off
 subplot(2,3,5)
 hold on;
 plot(ts,xc2_2)
-plot(ts,-xc2_u)
+plot(ts,xc2_u)
 title("Cyber System 2")
 legend("Rotational Velocity (rads/sec)", "Cyber Control Input")
 hold off
@@ -194,7 +198,7 @@ hold off
 subplot(2,3,6)
 hold on;
 plot(ts,xc3_2)
-plot(ts,-xc3_u)
+plot(ts,xc3_u)
 title("Cyber System 3")
 legend("Rotational Velocity (rads/sec)", "Cyber Control Input")
 hold off
@@ -204,5 +208,19 @@ figure; hold on;
 plot(up1_ts,0,'|',"color",'green')
 plot(up2_ts,.2,'|',"Color","black")
 plot(up3_ts,.4,'|',"Color","blue")
-
+title("Physical System Updates")
+legend("Physical System 1","Physical System 2", "Physical System 3")
 ylim([-3 3])
+hold off;
+
+%% Scratch
+trajectory1 = physical_system1.simulate([0,10]);
+x1s = trajectory1(:,1);
+x2s = trajectory1(:,2);
+us = trajectory1(:,3);
+ts = trajectory1(:,end);
+
+figure; hold on;
+plot(ts,x1s);
+plot(ts,x2s);
+plot(ts,us);

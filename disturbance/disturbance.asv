@@ -1,0 +1,27 @@
+classdef disturbance
+
+    properties
+        sampling_period;
+        update_schedule;
+        row;
+        column;
+    end
+    
+    methods
+        function self = disturbance(sampling_period)
+            self.sampling_period = sampling_period;
+            self.update_schedule = sampling_period;
+        end
+
+        function self = refresh_update_schedule(self, t_now)
+            if (t_now - self.update_schedule) < 0.005
+                self.update_schedule = t_now + self.sampling_period;
+            end
+        end
+
+        function u = disturbfun(self,t)
+            u = 1;
+        end
+    end
+
+end
