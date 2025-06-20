@@ -74,9 +74,7 @@ classdef (Abstract) cps < handle
 
         function self = add_disturbance(self, new_disturbance, binding)
             self.disturbances{end+1} = new_disturbance;
-            
-            % NOT working
-            new_disturbance.row = binding;
+            new_disturbance.row = binding; %binding is the control output to disturb 
             new_disturbance.col = length(self.disturbances);
             
         end
@@ -131,6 +129,7 @@ classdef (Abstract) cps < handle
             
             %6) Disturbance stuff
             disturbance_rows = number_of_controls;
+
             disturbance_cols = length(self.disturbances);
             
             if disturbance_cols == 0
@@ -143,11 +142,9 @@ classdef (Abstract) cps < handle
             disturbance_vals = zeros(disturbance_rows, 1);
 
             for i = 1:length(self.disturbances)
-                self.disturbances{i}.refresh_update_schedule(window_start)
+                self.disturbances{i}.refresh_update_schedule(window_start);
                 disturbance_update_schedule(i) = self.disturbances{i}.update_schedule;
-                disturbance_row = self.disturbances{i}.row;
-                disturbance_col = self.disturbances{i}.col;
-                disturbance_mapping(disturbance_row,disturbance_col) = 1;
+                disturbance_mapping(self.disturbances{i}.row,self.disturbances{i}.col) = 1;
             end
             disturbance_update_switch = ones(1,disturbance_cols);
 
@@ -184,7 +181,7 @@ classdef (Abstract) cps < handle
                 
                 %6.3) reset update switch
                 control_update_switch = 0*control_update_switch; 
-                disturbance_update_swtich = 0*disturbance_update_switch;
+                disturbance_update_switch = 0*disturbance_update_switch;
 
                 %6.4) simulate the system through the window
                 [t_window, x_window] = ode45( @(t_sim, x_sim) self.systemfun(t_sim,x_sim,u), window_span, x_sim(:,end));
@@ -231,7 +228,8 @@ classdef (Abstract) cps < handle
                     end
 
                 end
-
+                
+                % Update disturbance schedules and switches
                 for i = 1:length(self.disturbances)
                     if ((self.disturbances{i}.update_schedule - t_sim(end) ) <= 0.005)
                         self.disturbances{i}.refresh_update_schedule(t_sim(end))
@@ -239,7 +237,7 @@ classdef (Abstract) cps < handle
                     end
                 end
                 
-                %6.8) refresh 'update_schedule' vector
+                %6.8) refresh 'update_schedule' vector components
                 for i = 1:length(self.control_systems)
                     control_update_schedule(i) = self.control_systems{i}.update_schedule;
                 end

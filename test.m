@@ -19,10 +19,13 @@ damping = 1;
 Q = eye(2);
 R = 1;
 sampling_period = 2;
-initial_state = [7; 7];
+initial_state = [.2; 0];
 rates = 0.5:1:20;
 
 physical_system1 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
+
+initial_state = [1; 0; 0.3; 0]
+physical_system11 = inverted_pendulum(sampling_period,rates,initial_state);
 
 %CPS2 components
 
@@ -74,7 +77,7 @@ dist1 = constant(1/4);
 
 sub_3 = basic_coreg(physical_system3, cyber_system3);
 sub_2 = basic_coreg(physical_system2, cyber_system2);
-sub_1 = basic_coreg(physical_system1, cyber_system1);
+sub_1 = basic_coreg(physical_system11, cyber_system1);
 
 cps = multi_cps();
 cps.add_sub_system(sub_1);
@@ -121,18 +124,23 @@ disp("All dimension tests passed")
 ts = trajectory(:,end);
 xp1_1 = trajectory(:,cps.sub_systems{1}.cps_xpidcs(1));
 xp1_2 = trajectory(:,cps.sub_systems{1}.cps_xpidcs(2));
+
+xp1_3 = trajectory(:,cps.sub_systems{1}.cps_xpidcs(3));
+xp1_4 = trajectory(:,cps.sub_systems{1}.cps_xpidcs(4));
+
 xp2_1 = trajectory(:,cps.sub_systems{2}.cps_xpidcs(1));
 xp2_2 = trajectory(:,cps.sub_systems{2}.cps_xpidcs(2));
 xp3_1 = trajectory(:,cps.sub_systems{3}.cps_xpidcs(1));
 xp3_2 = trajectory(:,cps.sub_systems{3}.cps_xpidcs(2));
 
+[~, things] = size(trajectory);
 
-xp1_u = trajectory(:,13);
-xc1_u = trajectory(:,14);
-xp2_u = trajectory(:,15);
-xc2_u = trajectory(:,16);
-xp3_u = trajectory(:,17);
-xc3_u = trajectory(:,18);
+xp1_u = trajectory(:,things-6);
+xc1_u = trajectory(:,things-5);
+xp2_u = trajectory(:,things-4);
+xc2_u = trajectory(:,things-3);
+xp3_u = trajectory(:,things-2);
+xc3_u = trajectory(:,things-1);
 
 xc1_2 = trajectory(:,cps.sub_systems{1}.cps_xcidcs(2));
 xc2_2 = trajectory(:,cps.sub_systems{2}.cps_xcidcs(2));
@@ -153,10 +161,12 @@ subplot(2,3,1);
 hold on;
 plot(ts,xp1_1);
 plot(ts,xp1_2);
+plot(ts,xp1_3);
+plot(ts,xp1_4)
 plot(ts,xp1_u)
 plot(up1_ts,up1_us,'x')
 title("Physical System 1")
-legend("Translational Position","Translational Velocity","Control Input")
+legend("Translational Position","Translational Velocity","rotational position","rotational velocity","Control Input")
 hold off;
 
 subplot(2,3,2);
@@ -214,13 +224,6 @@ ylim([-3 3])
 hold off;
 
 %% Scratch
-trajectory1 = physical_system1.simulate([0,10]);
-x1s = trajectory1(:,1);
-x2s = trajectory1(:,2);
-us = trajectory1(:,3);
-ts = trajectory1(:,end);
+ts = trajectory(:,end);
 
-figure; hold on;
-plot(ts,x1s);
-plot(ts,x2s);
-plot(ts,us);
+x1_1

@@ -18,11 +18,12 @@ mass = 1;
 damping = 1;
 Q = eye(2);
 R = 1;
-sampling_period = 1;
-initial_state = [7; 7];
-rates = 1:1:20;
+sampling_period = 2;
+initial_state = [.2; ];
+rates = 0.5:1:20;
 
 physical_system1 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
+physical_system11 = inverted_pendulum(sampling_period,rates,initital_state)
 
 %CPS2 components
 
@@ -69,6 +70,9 @@ rates = 1:1:20;
 physical_system3 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
 
 
+% Disturbances
+dist1 = constant(1/4);
+
 sub_3 = basic_coreg(physical_system3, cyber_system3);
 sub_2 = basic_coreg(physical_system2, cyber_system2);
 sub_1 = basic_coreg(physical_system1, cyber_system1);
@@ -77,6 +81,7 @@ cps = multi_cps();
 cps.add_sub_system(sub_1);
 cps.add_sub_system(sub_2);
 cps.add_sub_system(sub_3);
+%cps.add_disturbance(dist1,1)
 
 %% Unit tests
 physical_system1 = cps.sub_systems{1}.physical_system.A;
@@ -206,11 +211,17 @@ plot(up2_ts,.2,'|',"Color","black")
 plot(up3_ts,.4,'|',"Color","blue")
 title("Physical System Updates")
 legend("Physical System 1","Physical System 2", "Physical System 3")
-
 ylim([-3 3])
+hold off;
 
 %% Scratch
 trajectory1 = physical_system1.simulate([0,10]);
-x1s = trajectory(:,1);
-x2s = trajectory(:,2);
-us = trajectory(:3);
+x1s = trajectory1(:,1);
+x2s = trajectory1(:,2);
+us = trajectory1(:,3);
+ts = trajectory1(:,end);
+
+figure; hold on;
+plot(ts,x1s);
+plot(ts,x2s);
+plot(ts,us);

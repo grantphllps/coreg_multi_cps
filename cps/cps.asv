@@ -74,9 +74,7 @@ classdef (Abstract) cps < handle
 
         function self = add_disturbance(self, new_disturbance, binding)
             self.disturbances{end+1} = new_disturbance;
-            
-            % NOT working
-            new_disturbance.row = binding;
+            new_disturbance.row = binding; %binding is the control output to disturb 
             new_disturbance.col = length(self.disturbances);
             
         end
@@ -126,7 +124,7 @@ classdef (Abstract) cps < handle
             t_sim = sim_span(1); % initial simulation time
             [~, number_of_controls] = size(self.B);
             u_sim = zeros(1,number_of_controls); %control input history
-            u = zeros(number_of_controls,1); %control input vector (not the history)
+            u_controls = zeros(number_of_controls,1); %control input vector (not the history)
             control_update_switch = ones(1,number_of_controls); %logical vector that indicates if a control system should be updated
             
             %6) Disturbance stuff
@@ -146,11 +144,8 @@ classdef (Abstract) cps < handle
                 self.disturbances{i}.refresh_update_schedule(window_start)
                 disturbance_update_schedule(i) = self.disturbances{i}.update_schedule;
                 disturbance_row = self.disturbances{i}.row;
-                disturbance_col = self.disturbances(i).col;
-
+                disturbance_col = self.disturbances{i}.col;
                 disturbance_mapping(disturbance_row,disturbance_col) = 1;
-
-                
             end
             disturbance_update_switch = ones(1,disturbance_cols);
 
@@ -168,11 +163,11 @@ classdef (Abstract) cps < handle
                         %calculate the new control input
                         idcs = self.control_systems{i}.cps_state_idcs; %indicies of this control system's state(s)
                         working_x = x_sim(idcs,end);
-                        u(i) = self.control_systems{i}.systeminput(t_sim(end), working_x);
+                        u_controls(i) = self.control_systems{i}.systeminput(t_sim(end), working_x);
                         %track the new update and time it occured
-                        self.control_systems{i}.input_updates(:,end+1) = zeros(length(u(i))+1,1);
+                        self.control_systems{i}.input_updates(:,end+1) = zeros(length(u_controls(i))+1,1);
                         self.control_systems{i}.input_updates(1,end) = t_sim(end);
-                        self.control_systems{i}.input_updates(2:end,end) = u(i);
+                        self.control_systems{i}.input_updates(2:end,end) = u_controls(i);
 
                     end
                 end
@@ -182,6 +177,8 @@ classdef (Abstract) cps < handle
                         disturbance_vals(i) = self.disturbances{i}.compute_disturbance(t_sim(end));
                     end
                 end
+
+                u = u_controls+disturbance_mapping * disturbance_vals;
                 
                 %6.3) reset update switch
                 control_update_switch = 0*control_update_switch; 
@@ -197,7 +194,7 @@ classdef (Abstract) cps < handle
                 %6.6) the control inputs are zoh's, build their 'history'
                 u_window = 1*ones(length(t_window), number_of_controls);
                 for i = 1:number_of_controls
-                    u_window(:,i) = u(i)*u_window(:,i);
+                    u_window(:,i) = u_controls(i)*u_window(:,i);
                 end
                 u_sim = [u_sim; u_window];
 
