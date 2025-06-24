@@ -9,7 +9,11 @@ classdef constant < disturbance
         end
 
         function output = compute_disturbance(self,t,x)
-            output = 8*sin(8 * pi * t);
+            if t > 5 && t < 15
+                output = 1*sin(8 * pi * t);
+            else
+                output = 0;
+            end
         end
     end
 end

@@ -58,6 +58,14 @@ classdef (Abstract) cps < handle
 
 
             % build the new A,B matrices for the entire cps
+
+            % | Ap1             ||xp1|    |Bp1         ||up1|
+            % |     Ac1         ||xc1|    |   Bc1      ||uc1|
+            % |         Ap2     ||xp2|    |      Bp2   ||up2|
+            % |             Ac2 ||xc2|    |         Bc2||uc2|
+            
+
+
             newA = [];
             newB = [];
             for i = 1:length(self.sub_systems)
@@ -143,7 +151,7 @@ classdef (Abstract) cps < handle
 
             for i = 1:length(self.disturbances)
                 self.disturbances{i}.refresh_update_schedule(window_start);
-                disturbance_update_schedule(i) = self.disturbances{i}.update_schedule;
+                disturbance_update_schedule(i,1) = self.disturbances{i}.update_schedule;
                 disturbance_mapping(self.disturbances{i}.row,self.disturbances{i}.col) = 1;
             end
             disturbance_update_switch = ones(1,disturbance_cols);
@@ -217,7 +225,7 @@ classdef (Abstract) cps < handle
                         
                         % CPS coupling
                         physical_system_state = x_sim(self.sub_systems{i}.cps_xpidcs,end);
-                        new_rate_target = norm(physical_system_state);
+                        new_rate_target = 15*norm(physical_system_state);
                         self.sub_systems{i}.cyber_system.update_velocity_reference(new_rate_target);
                         % CPS coupling end
 
@@ -232,7 +240,7 @@ classdef (Abstract) cps < handle
                 % Update disturbance schedules and switches
                 for i = 1:length(self.disturbances)
                     if ((self.disturbances{i}.update_schedule - t_sim(end) ) <= 0.005)
-                        self.disturbances{i}.refresh_update_schedule(t_sim(end))
+                        self.disturbances{i}.refresh_update_schedule(t_sim(end));
                         disturbance_update_switch(i) = 1;
                     end
                 end

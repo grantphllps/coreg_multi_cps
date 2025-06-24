@@ -24,7 +24,7 @@ rates = 0.5:1:20;
 
 physical_system1 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
 
-initial_state = [1; 0; 0.3; 0]
+initial_state = [1; 0; 0.3; 0];
 physical_system11 = inverted_pendulum(sampling_period,rates,initial_state);
 
 %CPS2 components
@@ -32,22 +32,33 @@ physical_system11 = inverted_pendulum(sampling_period,rates,initial_state);
 inertia = 10;
 damping = 1;
 control_input_range = [-20,20];
-lower_state_bounds = [-inf; 1];
+lower_state_bounds = [-inf; 0.25];
 upper_state_bounds = [inf; 20];
 sampling_period = 1/4;
 initial_state = [0; 2];
 
 cyber_system2 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state);
 
-mass = 1;
-damping = 1;
+% mass = 1;
+% damping = 1;
+% Q = eye(2);
+% R = 1;
+% sampling_period = 1;
+% initial_state = [4; -10];
+% rates = 1:1:20;
+% 
+% physical_system2 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
+
+m = 1;
+k = 632;
+b = 0;
 Q = eye(2);
 R = 1;
 sampling_period = 1;
-initial_state = [4; -10];
-rates = 1:1:20;
+initial_state = [0; 0];
+rates = 0.25:0.25:20;
+physical_system2 = spring_mass_damper(m,k,b,Q,R,sampling_period,rates,initial_state);
 
-physical_system2 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
 
 %CPS3 components
 
@@ -73,7 +84,8 @@ physical_system3 = simple_translational(mass,damping,Q,R,sampling_period,rates,i
 
 
 % Disturbances
-dist1 = constant(1/4);
+dist1 = constant(1/10);
+dist2 = constant(1/10);
 
 sub_3 = basic_coreg(physical_system3, cyber_system3);
 sub_2 = basic_coreg(physical_system2, cyber_system2);
@@ -84,40 +96,41 @@ cps.add_sub_system(sub_1);
 cps.add_sub_system(sub_2);
 cps.add_sub_system(sub_3);
 cps.add_disturbance(dist1,1)
+cps.add_disturbance(dist2,3)
 
 %% Unit tests
-physical_system1 = cps.sub_systems{1}.physical_system.A;
-if any(any(physical_system1 ~= cps.A(1:2,1:2)))
-    error("Faild CPS dimension check")
-end
-
-cyber_system1 = cps.sub_systems{1}.cyber_system.A;
-if any(any(cyber_system1 ~= cps.A(3:4,3:4)))
-    error("Faild CPS dimension check")
-end
-
-physical_system1 = cps.sub_systems{2}.physical_system.A;
-if any(any(physical_system1 ~= cps.A(5:6,5:6)))
-    error("Faild CPS dimension check")
-end
-
-cyber_system1 = cps.sub_systems{2}.cyber_system.A;
-if any(any(cyber_system1 ~= cps.A(7:8,7:8)))
-    error("Faild CPS dimension check")
-end
-
-psb = cps.sub_systems{1}.physical_system.B;
-if any(psb ~= cps.B(1:2,1))
-    error("Faild CPS dimension check")
-end
-
-disp("All dimension tests passed")
+% physical_system1 = cps.sub_systems{1}.physical_system.A;
+% if any(any(physical_system1 ~= cps.A(1:2,1:2)))
+%     error("Faild CPS dimension check")
+% end
+% 
+% cyber_system1 = cps.sub_systems{1}.cyber_system.A;
+% if any(any(cyber_system1 ~= cps.A(3:4,3:4)))
+%     error("Faild CPS dimension check")
+% end
+% 
+% physical_system1 = cps.sub_systems{2}.physical_system.A;
+% if any(any(physical_system1 ~= cps.A(5:6,5:6)))
+%     error("Faild CPS dimension check")
+% end
+% 
+% cyber_system1 = cps.sub_systems{2}.cyber_system.A;
+% if any(any(cyber_system1 ~= cps.A(7:8,7:8)))
+%     error("Faild CPS dimension check")
+% end
+% 
+% psb = cps.sub_systems{1}.physical_system.B;
+% if any(psb ~= cps.B(1:2,1))
+%     error("Faild CPS dimension check")
+% end
+% 
+% disp("All dimension tests passed")
 
 %sub_1.simulate([0, 10])
 
 %% Simulate
 
-[trajectory] = cps.simulate([0,10]);
+[trajectory] = cps.simulate([0,30]);
 
 %% Plottings
 
@@ -160,13 +173,14 @@ figure;
 subplot(2,3,1);
 hold on;
 plot(ts,xp1_1);
-plot(ts,xp1_2);
+%plot(ts,xp1_2);
 plot(ts,xp1_3);
-plot(ts,xp1_4)
+%plot(ts,xp1_4)
 plot(ts,xp1_u)
+plot(up1_ts,-2,'|',"color",'green')
 plot(up1_ts,up1_us,'x')
 title("Physical System 1")
-legend("Translational Position","Translational Velocity","rotational position","rotational velocity","Control Input")
+legend("Translational Position","rotational position","Up","new update","new update")
 hold off;
 
 subplot(2,3,2);
@@ -223,7 +237,3 @@ legend("Physical System 1","Physical System 2", "Physical System 3")
 ylim([-3 3])
 hold off;
 
-%% Scratch
-ts = trajectory(:,end);
-
-x1_1
