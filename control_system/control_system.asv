@@ -15,10 +15,6 @@ classdef (Abstract) control_system < handle
     end
 
     methods
-        function self = add_disturbance(self,new_disturbance)
-            self.disturbance = new_disturbance;
-        end
-
         function self = control_system(sampling_period)
             self.sampling_period = sampling_period;
             self.update_schedule = 0;
@@ -52,18 +48,16 @@ classdef (Abstract) control_system < handle
             window_start = sim_span(1);
 
             %
-
-            if isempty(self.disturbance)
-                self.disturbance = zero_disturbance(500);
-            end
             self.refresh_update_schedule(window_start);
-            self.disturbance.refresh_update_schedule(window_start);
 
             
 
             control_update = self.update_schedule;
-            disturbance_update = self.disturbance.update_schedule;
-            
+            if isempty(self.disturbance)
+                disturbance_update = inf;
+            else
+                disturbance_update = self.disturbance.update_schedule;
+            end
             update_schedule = [control_update; disturbance_update]; %note this is not self.update_schedule
             update_switch = [1 1];
             
@@ -84,8 +78,8 @@ classdef (Abstract) control_system < handle
                     u_dist = self.disturbance.compute_disturbance(t_sim(end), x_sim(:,end));
                 end
 
-                update_switch = [0, 0];
-                u = u_control + u_dist;
+                update_switch = [0, 0]f
+                u = u_control + u_dist
                 [t_window, x_window] = ode45( @(t_sim,x_sim) self.systemfun(t_sim,x_sim,u), window_span, x_sim(:,end));
 
                 x_sim = [x_sim x_window'];
@@ -94,7 +88,7 @@ classdef (Abstract) control_system < handle
                 u_window = u_control*ones(length(t_window),1);
                 u_sim = [u_sim; u_window];
 
-                t_now = t_sim(end);
+                t_now = t_sim(end)
 
                 if self.update_schedule - t_sim(end) < 0.005
                     self.refresh_update_schedule(t_now);

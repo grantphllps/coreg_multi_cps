@@ -29,9 +29,9 @@ physical_system11 = inverted_pendulum(sampling_period,rates,initial_state);
 
 %CPS2 components
 
-inertia = 10;
+inertia = 20;
 damping = 1;
-control_input_range = [-20,20];
+control_input_range = [-40,40];
 lower_state_bounds = [-inf; 0.25];
 upper_state_bounds = [inf; 20];
 sampling_period = 1/4;
@@ -95,8 +95,8 @@ cps = multi_cps();
 cps.add_sub_system(sub_1);
 cps.add_sub_system(sub_2);
 cps.add_sub_system(sub_3);
-cps.add_disturbance(dist1,1)
-cps.add_disturbance(dist2,3)
+cps.add_disturbance(dist1,1);
+cps.add_disturbance(dist2,3);
 
 %% Unit tests
 % physical_system1 = cps.sub_systems{1}.physical_system.A;
@@ -178,19 +178,20 @@ plot(ts,xp1_3);
 %plot(ts,xp1_4)
 plot(ts,xp1_u)
 plot(up1_ts,-2,'|',"color",'green')
-plot(up1_ts,up1_us,'x')
+%plot(up1_ts,up1_us,'x')
 title("Physical System 1")
-legend("Translational Position","rotational position","Up","new update","new update")
+legend("Translational Position","rotational position","Control Input")
 hold off;
 
 subplot(2,3,2);
 hold on;
 plot(ts,xp2_1);
-plot(ts,xp2_2);
+%plot(ts,xp2_2);
 plot(ts,xp2_u)
-plot(up2_ts,up2_us,'x')
+plot(up2_ts,-0.35,'|',"color",'green')
+%plot(up2_ts,up2_us,'x')
 title("Physical System 2")
-legend("Translational Position","Translational Velocity","Control Input")
+legend("Translational Position","Control Input")
 hold off;
 
 subplot(2,3,3);
@@ -198,7 +199,7 @@ hold on;
 plot(ts,xp3_1);
 plot(ts,xp3_2);
 plot(ts,xp3_u)
-plot(up3_ts,up3_us,'x')
+%plot(up3_ts,up3_us,'x')
 title("Physical System 2")
 legend("Translational Position","Translational Velocity","Control Input")
 hold off;
@@ -237,3 +238,39 @@ legend("Physical System 1","Physical System 2", "Physical System 3")
 ylim([-3 3])
 hold off;
 
+%% Single system
+
+
+m = 1;
+k = 632;
+b = 0;
+Q = eye(2);
+R = 1;
+sampling_period = 1/10;
+initial_state = [0; 0];
+rates = 0.25:0.25:20;
+
+sampling_rates = 1:1:20;
+figure;
+
+for i = sampling_rates
+
+    sampling_period  = 1/i;
+    subplot(2,10,i)
+    hold on;
+
+    physical_system_copy = spring_mass_damper(m,k,b,Q,R,sampling_period,rates,initial_state);
+    physical_system_copy.add_disturbance(dist1)
+    trajectory_new = physical_system_copy.simulate([0,30]);
+
+    ts = trajectory_new(:,4);
+    us = trajectory_new(:,3);
+    x2 = trajectory_new(:,2);
+    x1 = trajectory_new(:,1);
+    
+    title([i,"Hz"])
+    plot(ts,x1);
+    plot(ts,us);
+
+    hold off;
+end

@@ -218,21 +218,21 @@ classdef (Abstract) cps < handle
                         switch_idx = self.sub_systems{i}.physical_system.cps_cntrl_idx;
                         control_update_switch(switch_idx) = 1;
                         
-                        self.sub_systems{i}.physical_system.refresh_update_schedule(t_sim(end))
+                        self.sub_systems{i}.physical_system.refresh_update_schedule(t_sim(end));
                     end
 
                     if ( (self.sub_systems{i}.cyber_system.update_schedule - t_sim(end) ) <= 0.005)
                         
                         % CPS coupling
                         physical_system_state = x_sim(self.sub_systems{i}.cps_xpidcs,end);
-                        new_rate_target = 15*norm(physical_system_state);
+                        new_rate_target = 120*norm(physical_system_state);
                         self.sub_systems{i}.cyber_system.update_velocity_reference(new_rate_target);
                         % CPS coupling end
 
                         switch_idx = self.sub_systems{i}.cyber_system.cps_cntrl_idx;
                         control_update_switch(switch_idx) = 1;
 
-                        self.sub_systems{i}.cyber_system.refresh_update_schedule(t_sim(end))
+                        self.sub_systems{i}.cyber_system.refresh_update_schedule(t_sim(end));
                     end
 
                 end
