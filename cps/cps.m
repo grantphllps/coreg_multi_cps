@@ -167,6 +167,14 @@ classdef (Abstract) cps < handle
                 %6.2) set the control inputs based on the update switch
                 for i = 1:length(self.control_systems) 
                     if control_update_switch(i) == 1
+                        %Check for a reference change
+                        if (window_start - self.control_systems{i}.ref_update_schedule) > 0
+                            self.control_systems{i}.update_reference();
+                            self.control_systems{i}.update_ref_schedule();
+                            idcs = self.control_systems{i}.cps_state_idcs;
+                            x_sim(idcs,end) = self.control_systems{i}.ref;
+                        end
+
                         %calculate the new control input
                         idcs = self.control_systems{i}.cps_state_idcs; %indicies of this control system's state(s)
                         working_x = x_sim(idcs,end);
@@ -225,7 +233,7 @@ classdef (Abstract) cps < handle
                         
                         % CPS coupling
                         physical_system_state = x_sim(self.sub_systems{i}.cps_xpidcs,end);
-                        new_rate_target = 120*norm(physical_system_state);
+                        new_rate_target = 6*norm(physical_system_state);
                         self.sub_systems{i}.cyber_system.update_velocity_reference(new_rate_target);
                         % CPS coupling end
 

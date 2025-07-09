@@ -6,7 +6,13 @@ classdef (Abstract) control_system < handle
         update_schedule; %time of next scheduled physical input update
         input_updates; %Vector tracking the time and value of physical control updates
         
+        
         disturbance = {};
+
+        ref_trajectory = [];
+        ref_update_schedule; %next time to update the reference
+        ref_idx = 1;
+        ref = [];
 
         cps_state_idcs; % The indicies of this control system's state variables in the cps's state vector (x)
         cps_cntrl_idcs; % The indicies of this control system's control outputs in the cps's control vector (u)
@@ -15,6 +21,27 @@ classdef (Abstract) control_system < handle
     end
 
     methods
+        function self = add_reference(self, new_reference)
+            ref_to_add = new_reference;
+            [rows, cols] = size(new_reference);
+            ref_to_add(end+1,:) = inf*ones(1,cols);
+
+            self.ref_trajectory = ref_to_add;
+            self.ref_update_schedule = new_reference(1,1);
+        end
+
+        function self = update_reference(self)
+            new_traj = self.ref_trajectory(self.ref_idx,:);
+            new_ref = new_traj(2:end);
+            self.ref = new_ref;
+        end
+
+        function self = update_ref_schedule(self)
+            self.ref_idx = self.ref_idx + 1;
+            next_time = self.ref_trajectory(self.ref_idx,1);
+            self.ref_update_schedule = next_time;
+        end
+
         function self = add_disturbance(self,new_disturbance)
             self.disturbance = new_disturbance;
         end
@@ -51,16 +78,15 @@ classdef (Abstract) control_system < handle
             sim_end = sim_span(2);
             window_start = sim_span(1);
 
-            %
-
+            %Disturbance
             if isempty(self.disturbance)
                 self.disturbance = zero_disturbance(500);
             end
+
             self.refresh_update_schedule(window_start);
             self.disturbance.refresh_update_schedule(window_start);
 
             
-
             control_update = self.update_schedule;
             disturbance_update = self.disturbance.update_schedule;
             
@@ -77,7 +103,20 @@ classdef (Abstract) control_system < handle
                 window_span = window_start:0.001:window_end;
 
                 if update_switch(1) == 1
+
+                    if (window_start - self.ref_update_schedule) > 0
+                        % update the reference
+                        self.update_reference();
+                        
+                        % update the reference schedule
+                        self.update_ref_schedule();
+
+                        x_sim(:,end) = self.ref;
+
+                    end
+
                     u_control = self.systeminput(t_sim(end), x_sim(:,end));
+                    
                 end
 
                 if update_switch(2) == 1
@@ -120,7 +159,6 @@ classdef (Abstract) control_system < handle
     methods (Abstract)
         xdot = systemfun(self,t,x,u)
         u = systeminput(self,t,x)
-        %self = update_sampling_period(self,new_period)
     end %abstract methods
 
 end % classdef control_system
