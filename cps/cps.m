@@ -5,6 +5,10 @@ classdef (Abstract) cps < handle
         A; B;
         control_systems = {}; % holds handles to each control_system
         disturbances = {};
+        cyber_system_trajectory = {} %cell array of arrays representing cyber-ystem nodes
+        cyber_system_trajectory_idx = 1;
+        cyber_system_update_ready = [] %logical vector used to determine in cyber_system trajectory update is ready
+        cyber_system_error_tolerance = 0.5 %Hz
     end
 
     methods
@@ -85,6 +89,23 @@ classdef (Abstract) cps < handle
             new_disturbance.row = binding; %binding is the control output to disturb 
             new_disturbance.col = length(self.disturbances);
             
+        end
+
+        function self = set_cyber_system_trajectory(self, new_trajectory)
+            self.cyber_system_trajectory = new_trajectory;
+        end
+
+        function self = update_cyber_trajectory_reference(self,current_state,sub_system_idx) 
+        %Compute cyber-state error
+        reference = self.cyber_system_trajectory{self.cyber_system_trajectory_idx}(sub_system_idx);
+        error = current_state - reference;
+
+        if abs(error) < self.cyber_system_error_tolerance
+            self.cyber_system_update_ready(sub_system_idx) = 1;
+        else
+            self.cyber_system_update_ready(sub_system_idx) = 0;
+        end
+        
         end
 
         function xdot = systemfun(self,t,x,u)
@@ -233,7 +254,14 @@ classdef (Abstract) cps < handle
                         
                         % CPS coupling
                         physical_system_state = x_sim(self.sub_systems{i}.cps_xpidcs,end);
-                        new_rate_target = 6*norm(physical_system_state);
+                        cyber_system_state = x_sim(self.sub_systems{i}.cps_xcidcs(end), end);
+
+                        if isempty(self.cyber_system_trajectory) %Coupling for system without a cyber trajectory
+                            new_rate_target = 6*norm(physical_system_state);
+                        else
+                            self.update_cyber_trajectory_reference(cyber_system_state,i);
+                            new_rate_target = self.cyber_system_trajectory{self.cyber_system_trajectory_idx}(i);
+                        end
                         self.sub_systems{i}.cyber_system.update_velocity_reference(new_rate_target);
                         % CPS coupling end
 
@@ -243,6 +271,11 @@ classdef (Abstract) cps < handle
                         self.sub_systems{i}.cyber_system.refresh_update_schedule(t_sim(end));
                     end
 
+                    %If the cyber states are ready, update the idx
+                    if all(self.cyber_system_update_ready) && self.cyber_system_trajectory_idx ~= length(self.cyber_system_trajectory)
+                        self.cyber_system_trajectory_idx = 1 + self.cyber_system_trajectory_idx;% advance
+                        self.cyber_system_update_ready = 0*self.cyber_system_update_ready; %reset
+                    end
                 end
                 
                 % Update disturbance schedules and switches

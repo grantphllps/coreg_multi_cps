@@ -17,7 +17,7 @@ classdef (Abstract) mpc < control_system
             self.lower_constraints = lower_constraints;
 
             %just set to whatever, these seem to be resonable ...
-            self.input_levels = 11;
+            self.input_levels = 750;
             self.horizon_length = 2;
 
             self.controls = linspace(self.input_constraints(1),input_constraints(2), self.input_levels);
@@ -48,7 +48,7 @@ classdef (Abstract) mpc < control_system
             %2) Compute cost for all control sequences
             sequence_costs = inf*ones(length(self.sequences),1);
 
-            for i = 1:length(self.sequences) %can also use "parfor" here
+            parfor i = 1:length(self.sequences) %can also use "parfor" here
                 
                 %2.1) Compute the cost of "working sequence" over the
                 %horizon

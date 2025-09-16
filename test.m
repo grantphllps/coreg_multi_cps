@@ -97,8 +97,8 @@ cps = multi_cps();
 cps.add_sub_system(sub_1);
 cps.add_sub_system(sub_2);
 cps.add_sub_system(sub_3);
-cps.add_disturbance(dist1,1);
-cps.add_disturbance(dist2,3);
+% cps.add_disturbance(dist1,1);
+% cps.add_disturbance(dist2,3);
 
 %% Unit tests
 % physical_system1 = cps.sub_systems{1}.physical_system.A;

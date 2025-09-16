@@ -1,3 +1,7 @@
+close all;
+clear;
+clc;
+
 function G = plot_taskset_graph(jsonPath)
 %PLOT_TASKSET_GRAPH Plot a graph from taskset relationships in a JSON file.
 %   G = PLOT_TASKSET_GRAPH(jsonPath)
@@ -38,8 +42,8 @@ function G = plot_taskset_graph(jsonPath)
     %--- Plot
     figure('Color','w');
     p = plot(G, ...
-        'Layout','force', ...
-        'Iterations', 150, ...
+        'Layout','circle', ...
+        'Center', 2, ...
         'NodeLabel', G.Nodes.Name, ...
         'MarkerSize', 7, ...
         'LineWidth', 1.2);
@@ -56,5 +60,24 @@ function G = plot_taskset_graph(jsonPath)
 end
 
 
-
 G = plot_taskset_graph('overlapping_relationships_20250811_181530.json');
+p = findobj(gca, 'Type', 'GraphPlot');  % get current graph plot handle
+
+%Interesting One
+src = "5";
+dst = "172";
+
+% src = "5"
+% dst = "294"
+
+[pathNodes, dist] = shortestpath(G, src, dst);   % unweighted shortest path
+if isempty(pathNodes)
+    warning('No path between %s and %s', src, dst);
+else
+    % highlight nodes
+    highlight(p, pathNodes, 'NodeColor', 'r');
+
+    % highlight edges along the path
+    eidx = findedge(G, pathNodes(1:end-1), pathNodes(2:end));
+    highlight(p, eidx, 'LineWidth', 2.5, 'EdgeColor', 'r');
+end
