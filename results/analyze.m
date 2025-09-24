@@ -3,7 +3,7 @@ clear;
 clc;
 
 % Set the directory containing the files
-dataDir = '/Users/gphillip/Documents/MATLAB/coreg_multi_cps/results/n5x3'; % <-- change this
+dataDir = '/Users/gphillip/Documents/MATLAB/coreg_multi_cps/results/n3x2'; % <-- change this
 
 % Find all files starting with "results_summary" in the directory
 fileStruct = dir(fullfile(dataDir, 'results_summary*'));

@@ -6,7 +6,7 @@ classdef simple_rotational < mpc
     end %properties
 
     methods
-        function self = simple_rotational(inertia, damping, input_constraints, lower_constraints, upper_constraints, sampling_period, x0)
+        function self = simple_rotational(inertia, damping, input_constraints, lower_constraints, upper_constraints, sampling_period, x0, xref0)
             self = self@mpc(input_constraints, lower_constraints, upper_constraints, sampling_period);
 
             self.x0 = x0;
@@ -25,7 +25,8 @@ classdef simple_rotational < mpc
             self.Q = [0 0; 0 10]; %penalty for state
             self.R = 0;           %Penalty for input
 
-            self.velocity_reference = 10;
+            %self.velocity_reference = 10;
+            self.velocity_reference = xref0;
 
         end % simple_rotational constructor
 

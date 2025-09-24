@@ -49,7 +49,9 @@ R = 1;
 sampling_period = 1;
 initial_state = [0; 0];
 rates = 0.25:0.25:20;
-physical_system2 = spring_mass_damper(m,k,b,Q,R,sampling_period,rates,initial_state);
+
+ps2_initial_state = [-1; 0; -0.3; 0];
+physical_system2 = inverted_pendulum(sampling_period,rates,ps2_initial_state);
 
 sub_2 = basic_coreg(physical_system2, cyber_system2);
 sub_1 = basic_coreg(physical_system11, cyber_system1);
@@ -62,21 +64,7 @@ cps.set_cyber_system_trajectory({[5,5],[10,3],[1,15]})
 
 %% Run the simulation
 
-[trajectory] = cps.simulate([0,2]);
-
-% Define the folder where you want to save
-folder = 'C:\Users\YourName\Documents\MATLAB\MyWorkspaceSaves';
-
-% Make sure the folder exists (create if not)
-if ~exist(folder, 'dir')
-    mkdir(folder);
-end
-
-% Define the filename
-filename = fullfile(folder, 'myWorkspace.mat');
-
-% Save the entire workspace
-save(filename);
+[trajectory] = cps.simulate([0,1]);
 
 %% Plotting
 

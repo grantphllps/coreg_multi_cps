@@ -6,13 +6,13 @@ clc;
 
 inertia = 6.9137;
 damping = 50;
-control_input_range = [-15000, 15000];
+control_input_range = [-500, 2000];
 lower_state_bounds = [-inf; 0.5];
-upper_state_bounds = [inf; 20];
+upper_state_bounds = [inf; 10];
 sampling_period = 1/10;
-initial_state = [0; 5];
+initial_state = [0; 2];
 
-cyber_system1 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state);
+cyber_system1 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state,2);
 
 mass = 1;
 damping = 1;
@@ -33,13 +33,13 @@ physical_system11 = inverted_pendulum(sampling_period,rates,ps1_initial_state);
 
 inertia = 6.9137;
 damping = 50;
-control_input_range = [-15000, 15000];
-lower_state_bounds = [-inf; 0.25];
-upper_state_bounds = [inf; 20];
+control_input_range = [-500, 2000];
+lower_state_bounds = [-inf; 0.5];
+upper_state_bounds = [inf; 10];
 sampling_period = 1/10;
 initial_state = [0; 5];
 
-cyber_system2 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state);
+cyber_system2 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state,5);
 
 m = 1;
 k = 632;
@@ -58,7 +58,7 @@ cps = multi_cps();
 cps.add_sub_system(sub_1);
 cps.add_sub_system(sub_2);
 
-cps.set_cyber_system_trajectory({[5,5],[10,3],[1,15]})
+cps.set_cyber_system_trajectory({[2,5],[5,5],[2,10]})
 
 %% Run the simulation
 

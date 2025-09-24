@@ -43,11 +43,9 @@ function G = plot_taskset_graph(jsonPath)
     figure('Color','w');
     p = plot(G, ...
         'Layout','circle', ...
-        'Center', 2, ...
         'NodeLabel', G.Nodes.Name, ...
         'MarkerSize', 7, ...
         'LineWidth', 1.2);
-    title('Taskset Overlap Graph');
     axis off;
 
     % Optional styling
@@ -60,7 +58,9 @@ function G = plot_taskset_graph(jsonPath)
 end
 
 
-G = plot_taskset_graph('overlapping_relationships_20250811_181530.json');
+%G = plot_taskset_graph('overlapping_relationships_20250811_181530.json');
+%G = plot_taskset_graph('overlapping_relationships_20250920_022205.json');
+G = plot_taskset_graph('overlapping_relationships_20250921_154405.json');
 p = findobj(gca, 'Type', 'GraphPlot');  % get current graph plot handle
 
 %Interesting One
