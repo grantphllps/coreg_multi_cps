@@ -3,7 +3,7 @@ clear;
 clc;
 
 % Set the directory containing the files
-dataDir = '/Users/gphillip/Documents/MATLAB/coreg_multi_cps/results/n3x2'; % <-- change this
+dataDir = '/Users/gphillip/Documents/MATLAB/coreg_multi_cps/results/n3x4'; % <-- change this
 
 % Find all files starting with "results_summary" in the directory
 fileStruct = dir(fullfile(dataDir, 'results_summary*'));
@@ -43,14 +43,20 @@ for j = 1:length(files)
     
     ilp_values = ilp_values+ILP_values;
     ilpds_values = ilpds_values+ILPDS_values;
-
 end
+
+%outgoing
+diff = (ilpds_values - ilp_values) / length(files);
+save("3x4diff.mat","diff")
+
+disp(length(files))
 
 % Display results
 figure;
 hold on;
 plot(utilization_values, ilp_values / length(files), "LineWidth",1);
 plot(utilization_values, ilpds_values / length(files), "LineWidth",1);
+plot(utilization_values, diff, "LineWidth",1)
 legend(["ILP", "ILP-DS"])
 xlabel("Utilization")
 ylabel("Percent Schedulable")

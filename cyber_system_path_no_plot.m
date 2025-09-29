@@ -39,17 +39,19 @@ upper_state_bounds = [inf; 10];
 sampling_period = 1/10;
 initial_state = [0; 5];
 
-cyber_system2 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state,5);
+cyber_system2 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state,8);
 
 m = 1;
 k = 632;
 b = 1;
 Q = eye(2);
 R = 1;
-sampling_period = 1;
+sampling_period = 8;
 initial_state = [0; 0];
-rates = 0.25:0.25:20;
-physical_system2 = spring_mass_damper(m,k,b,Q,R,sampling_period,rates,initial_state);
+rates = 0.5:1:20;
+
+ps2_initial_state = [-.3; 0; -0.3; 0];
+physical_system2 = inverted_pendulum(sampling_period,rates,ps2_initial_state);
 
 sub_2 = basic_coreg(physical_system2, cyber_system2);
 sub_1 = basic_coreg(physical_system11, cyber_system1);
@@ -58,14 +60,14 @@ cps = multi_cps();
 cps.add_sub_system(sub_1);
 cps.add_sub_system(sub_2);
 
-cps.set_cyber_system_trajectory({[2,5],[5,5],[2,10]})
+cps.set_cyber_system_trajectory({[2,8],[2,2],[8,2]})
 
 %% Run the simulation
 
-[trajectory] = cps.simulate([0,2]);
+[trajectory] = cps.simulate([0,.1]);
 
 % Define the folder where you want to save
-folder = 'C:\Users\YourName\Documents\MATLAB\MyWorkspaceSaves';
+folder = './';
 
 % Make sure the folder exists (create if not)
 if ~exist(folder, 'dir')

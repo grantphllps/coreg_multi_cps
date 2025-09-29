@@ -46,7 +46,7 @@ k = 632;
 b = 1;
 Q = eye(2);
 R = 1;
-sampling_period = 1;
+sampling_period = 5;
 initial_state = [0; 0];
 rates = 0.25:0.25:20;
 
@@ -64,7 +64,7 @@ cps.set_cyber_system_trajectory({[5,5],[10,3],[1,15]})
 
 %% Run the simulation
 
-[trajectory] = cps.simulate([0,1]);
+[trajectory] = cps.simulate([0,0.4]);
 
 %% Plotting
 
@@ -79,6 +79,8 @@ xp1_4 = trajectory(:,cps.sub_systems{1}.cps_xpidcs(4));
 % Physical System 2
 xp2_1 = trajectory(:,cps.sub_systems{2}.cps_xpidcs(1)); %position
 xp2_2 = trajectory(:,cps.sub_systems{2}.cps_xpidcs(2));
+xp2_3 = trajectory(:,cps.sub_systems{2}.cps_xpidcs(3)); %theta
+xp1_4 = trajectory(:,cps.sub_systems{2}.cps_xpidcs(4));
 
 [~, things] = size(trajectory);
 
@@ -102,21 +104,20 @@ subplot(2,2,1)
 hold on;
 plot(ts_coreg,xp1_1);
 plot(ts_coreg,xp1_3);
-plot(ts_coreg,xp1_u)
-plot(up1_ts,-2,'|',"color",'green')
+% plot(ts_coreg,xp1_u)
+plot(up1_ts,0,'x',"color",'r')
 title("Physical System 1")
-legend("Translational Position","rotational position","Control Input")
+legend("Translational Position","Rotational Position","Control Inputs")
 hold off;
 
 subplot(2,2,2);
 hold on;
 plot(ts_coreg,xp2_1);
-%plot(ts_coreg,xp2_2);
-plot(ts_coreg,xp2_u)
-plot(up2_ts,-0.35,'|',"color",'green')
-%plot(up2_ts,up2_us,'x')
+plot(ts_coreg,xp2_2);
+% plot(ts_coreg,xp2_u)
+plot(up2_ts,0,'x',"color",'r')
 title("Physical System 2")
-legend("Translational Position","Control Input")
+legend("Translational Position","Rotational Position","Control Inputs")
 hold off;
 
 subplot(2,2,3)
