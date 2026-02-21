@@ -1,72 +1,6 @@
+%Plotting
+
 close all;
-clear;
-clc;
-
-%CPS1 components
-
-inertia = 6.9137;
-damping = 50;
-control_input_range = [-15000, 15000];
-lower_state_bounds = [-inf; 0.5];
-upper_state_bounds = [inf; 20];
-sampling_period = 1/10;
-initial_state = [0; 5];
-
-cyber_system1 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state);
-
-mass = 1;
-damping = 1;
-Q = eye(2);
-R = 1;
-sampling_period = 2;
-initial_state = [5; 0];
-rates = 0.5:1:20;
-
-physical_system1 = simple_translational(mass,damping,Q,R,sampling_period,rates,initial_state);
-
-%Inverted pendulum is x dx theta dtheta
-
-ps1_initial_state = [1; 0; 0.3; 0];
-physical_system11 = inverted_pendulum(sampling_period,rates,ps1_initial_state);
-
-%CPS2 components
-
-inertia = 6.9137;
-damping = 50;
-control_input_range = [-15000, 15000];
-lower_state_bounds = [-inf; 0.25];
-upper_state_bounds = [inf; 20];
-sampling_period = 1/10;
-initial_state = [0; 5];
-
-cyber_system2 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state);
-
-m = 1;
-k = 632;
-b = 1;
-Q = eye(2);
-R = 1;
-sampling_period = 5;
-initial_state = [0; 0];
-rates = 0.25:0.25:20;
-
-ps2_initial_state = [-1; 0; -0.3; 0];
-physical_system2 = inverted_pendulum(sampling_period,rates,ps2_initial_state);
-
-sub_2 = basic_coreg(physical_system2, cyber_system2);
-sub_1 = basic_coreg(physical_system11, cyber_system1);
-
-cps = multi_cps();
-cps.add_sub_system(sub_1);
-cps.add_sub_system(sub_2);
-
-cps.set_cyber_system_trajectory({[5,5],[10,3],[1,15]})
-
-%% Run the simulation
-
-[trajectory] = cps.simulate([0,0.4]);
-
-%% Plotting
 
 ts_coreg = trajectory(:,end);
 
@@ -100,38 +34,125 @@ up2_us = cps.sub_systems{2}.physical_system.input_updates(2,:);
 
 figure;
 
+fontsize = 16;
+lineweight = 1;
+marker =  ".";
+markerSize = 16;
+
+pxlims = 8;
+psxlabel = "Time (s)";
+psylabel1 = "Position (meters)";
+psylabel2 = "Angle (rad)";
+psylims1 = [-1 1];
+psylims2 = [-.4 .4];
+
+csylims = [0 10];
+
 subplot(2,2,1)
 hold on;
-plot(ts_coreg,xp1_1);
-plot(ts_coreg,xp1_3);
+
+yyaxis left
+plot(ts_coreg,xp1_1,"LineWidth",lineweight);
+ylabel(psylabel1,"FontSize",fontsize,"FontName","Times","Color","Black")
+ylim(psylims1)
+yticks(-1:0.2:1)
+
+yyaxis right
+plot(ts_coreg,xp1_3,"--","LineWidth",lineweight);
+ylabel(psylabel2,"FontSize",fontsize,"FontName","Times","Color","Black")
+ylim(psylims2)
+
+xlabel(psxlabel,"FontSize",fontsize)
 % plot(ts_coreg,xp1_u)
-plot(up1_ts,0,'x',"color",'r')
-title("Physical System 1")
-legend("Translational Position","Rotational Position","Control Inputs")
+plot(up1_ts,0,'.',"color",'r',"MarkerSize",10)
+title("Physical System 1","FontSize",fontsize,"FontName","Times")
+legend("Cart Position","Pendulum Position")
+xlim([0 8])
+
+xticks(0:0.5:8)
+yticks(-1:0.1:1)
+
+grid on;
+ax = gca;
+ax.FontSize = fontsize;
+ax.FontName = "Times";
 hold off;
+
+%End first
 
 subplot(2,2,2);
 hold on;
-plot(ts_coreg,xp2_1);
-plot(ts_coreg,xp2_2);
-% plot(ts_coreg,xp2_u)
-plot(up2_ts,0,'x',"color",'r')
-title("Physical System 2")
-legend("Translational Position","Rotational Position","Control Inputs")
+yyaxis left
+plot(ts_coreg,xp2_1,"LineWidth",lineweight);
+ylabel(psylabel1,"FontSize",fontsize,"FontName","Times","Color","Black")
+ylim(psylims1)
+yticks(-1:0.2:1)
+
+yyaxis right
+plot(ts_coreg,xp2_3,"--","LineWidth",lineweight);
+ylabel(psylabel2,"FontSize",fontsize,"FontName","Times","Color","Black")
+ylim(psylims2)
+
+xlabel(psxlabel,"FontSize",fontsize,"FontName","Times")
+% plot(ts_coreg,xp1_u)
+plot(up2_ts,0,'.',"color",'r',"MarkerSize",10)
+title("Physical System 2","FontSize",fontsize,"FontName","Times","Color","Black")
+legend("Cart Position","Pendulum Position")
+xlim([0 8])
+
+xticks(0:0.5:8)
+yticks(-1:0.1:1)
+
+grid on;
+ax = gca;
+ax.FontSize = fontsize;
+ax.FontName = "Times";
 hold off;
+
+%End second
 
 subplot(2,2,3)
 hold on;
-plot(ts_coreg,xc1_2)
+plot(ts_coreg,xc1_2,"LineWidth",lineweight)
 %plot(ts_coreg,xc1_u)
-title("Cyber System 1")
-legend("Rotational Velocity (rads/sec)", "Cyber Control Input")
-hold off
+title("Cyber System 1","FontSize",fontsize,"FontName","Times")
+xlabel("Time (s)","FontSize",fontsize,"FontName","Times")
+ylabel("Sampling Rate (Hz)","FontSize",fontsize,"FontName","Times")
+ylim(csylims)
+
+legend("Control Job Release Rate")
+
+xticks(0:0.5:8)
+yticks(0:1:10)
+
+grid on;
+ax = gca;
+ax.FontSize = fontsize;
+ax.FontName = "Times"
+xlim([0 8])
+hold off;
+
+%End thrid
 
 subplot(2,2,4)
 hold on;
-plot(ts_coreg,xc2_2)
+plot(ts_coreg,xc2_2,"LineWidth",lineweight)
 %plot(ts_coreg,xc2_u)
-title("Cyber System 2")
-legend("Rotational Velocity (rads/sec)", "Cyber Control Input")
+title("Cyber System 2","FontSize",fontsize,"FontName","Times")
+xlabel("Time (s)","FontSize",fontsize,"FontName","Times")
+ylabel("Sampling Rate (Hz)","FontSize",fontsize,"FontName","Times")
+ylim(csylims)
+
+legend("Control Job Release Rate")
+
+xticks(0:0.5:8)
+yticks(0:1:10)
+
+grid on;
+ax = gca;
+xlim([0 8])
+ax.FontSize = fontsize;
+ax.FontName = "Times"
 hold off
+
+%End fourth

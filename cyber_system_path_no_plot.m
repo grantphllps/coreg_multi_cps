@@ -10,15 +10,15 @@ control_input_range = [-500, 2000];
 lower_state_bounds = [-inf; 1];
 upper_state_bounds = [inf; 10];
 sampling_period = 1/10;
-initial_state = [0; 2];
+initial_state = [0; 2.01];
 
-cyber_system1 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state,2);
+cyber_system1 = simple_rotational(inertia, damping, control_input_range, lower_state_bounds, upper_state_bounds, sampling_period, initial_state,2.01);
 
 mass = 1;
 damping = 1;
 Q = eye(2);
 R = 1;
-sampling_period = 2;
+sampling_period = 2.01;
 initial_state = [5; 0];
 rates = 1:1:20;
 
