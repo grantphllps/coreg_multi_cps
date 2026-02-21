@@ -1,0 +1,12 @@
+{Error using mpc/systeminput (line 52)
+Arrays have incompatible sizes for this operation.
+
+Error in cps/simulate (line 202)
+                        u_controls(i) = self.control_systems{i}.systeminput(t_sim(end), working_x);
+
+Error in cyber_system_path_no_plot (line 68)
+[trajectory] = cps.simulate([0,2]);
+
+Error in run (line 112)
+evalin('caller', strcat(scriptStem, ';'));
+} 

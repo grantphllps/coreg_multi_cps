@@ -17,12 +17,13 @@ classdef (Abstract) mpc < control_system
             self.lower_constraints = lower_constraints;
 
             %just set to whatever, these seem to be resonable ...
-            self.input_levels = 750;
+            self.input_levels = 2600;
             self.horizon_length = 2;
 
             self.controls = linspace(self.input_constraints(1),input_constraints(2), self.input_levels);
             self.sequences = generate_sequences(self.controls, self.horizon_length);
         end % mpc constructor
+
 
         function xdot = systemfun(self,t,x,u)
             xdot = self.A*x + self.B*u;

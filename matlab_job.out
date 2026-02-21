@@ -1,0 +1,118 @@
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2024 The MathWorks, Inc.
+             R2024a Update 5 (24.1.0.2653294) 64-bit (glnxa64)
+                               June 24, 2024
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+
+ans = 
+
+  multi_cps with properties:
+
+                     sub_systems: {[1x1 basic_coreg]  [1x1 basic_coreg]}
+                               A: [12x12 double]
+                               B: [12x4 double]
+                 control_systems: {1x4 cell}
+                    disturbances: {}
+         cyber_system_trajectory: {1x4 cell}
+     cyber_system_trajectory_idx: [1]
+       cyber_system_update_ready: []
+    cyber_system_error_tolerance: [0.5000]
+
+Starting parallel pool (parpool) using the 'Processes' profile ...
+Connected to parallel pool with 16 workers.
+
+prev_ref =
+
+     2
+
+
+new_upper_constraints =
+
+     2
+
+
+new_lower_constraints =
+
+    1.9800
+
+
+self = 
+
+  simple_rotational with properties:
+
+                      I: 6.9137
+                      b: 50
+                      Q: [2x2 double]
+                      R: 0
+     velocity_reference: 2
+      input_constraints: [-500 2000]
+      upper_constraints: [Inf 2.0200]
+      lower_constraints: [2x1 double]
+           input_levels: 2600
+         horizon_length: 2
+              sequences: [6760000x2 double]
+               controls: [-500 -499.0381 -498.0762 ... ] (1x2600 double)
+                      A: [2x2 double]
+                      B: [2x1 double]
+                      C: [2x2 double]
+                      D: 0
+                     x0: [2x1 double]
+        sampling_period: 0.1000
+        update_schedule: 0.1000
+          input_updates: [2x1 double]
+            disturbance: {}
+         ref_trajectory: []
+    ref_update_schedule: []
+                ref_idx: 1
+                    ref: []
+         cps_state_idcs: [5 6]
+         cps_cntrl_idcs: -1
+         cps_update_idx: 6
+          cps_cntrl_idx: 2
+
+
+self = 
+
+  simple_rotational with properties:
+
+                      I: 6.9137
+                      b: 50
+                      Q: [2x2 double]
+                      R: 0
+     velocity_reference: 2
+      input_constraints: [-500 2000]
+      upper_constraints: [Inf 2.0200]
+      lower_constraints: [-Inf 1.9600]
+           input_levels: 2600
+         horizon_length: 2
+              sequences: [6760000x2 double]
+               controls: [-500 -499.0381 -498.0762 ... ] (1x2600 double)
+                      A: [2x2 double]
+                      B: [2x1 double]
+                      C: [2x2 double]
+                      D: 0
+                     x0: [2x1 double]
+        sampling_period: 0.1000
+        update_schedule: 0.1000
+          input_updates: [2x1 double]
+            disturbance: {}
+         ref_trajectory: []
+    ref_update_schedule: []
+                ref_idx: 1
+                    ref: []
+         cps_state_idcs: [5 6]
+         cps_cntrl_idcs: -1
+         cps_update_idx: 6
+          cps_cntrl_idx: 2
+
+
+window_start =
+
+    0.1000
+
+Parallel pool using the 'Processes' profile is shutting down.
